@@ -6,6 +6,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/widgets.dart';
 import '../../domain/repositories/repositories.dart';
+import '../../features/calendar/viewmodels/calendar_viewmodel.dart';
+import '../../features/calendar/views/calendar_view.dart';
 import '../../features/home/viewmodels/home_viewmodel.dart';
 import '../../features/home/viewmodels/main_shell_viewmodel.dart';
 import '../../features/home/views/main_shell_view.dart';
@@ -13,6 +15,10 @@ import '../../features/onboarding/viewmodels/onboarding_viewmodel.dart';
 import '../../features/onboarding/viewmodels/splash_viewmodel.dart';
 import '../../features/onboarding/views/onboarding_view.dart';
 import '../../features/onboarding/views/splash_view.dart';
+import '../../features/planner/viewmodels/planner_viewmodel.dart';
+import '../../features/planner/viewmodels/task_form_viewmodel.dart';
+import '../../features/planner/views/add_edit_task_view.dart';
+import '../../features/planner/views/study_planner_view.dart';
 import '../../features/settings/views/component_library_view.dart';
 import '../../features/subjects/viewmodels/subject_details_viewmodel.dart';
 import '../../features/subjects/viewmodels/subject_form_viewmodel.dart';
@@ -208,24 +214,52 @@ abstract final class AppPages {
     ),
     GetPage<void>(
       name: AppRoutes.planner,
-      page: () => const _UpcomingRoutePlaceholder(
-        title: 'Study Planner',
-        subtitle: 'Study Planner will be implemented in Section 5.5.',
-      ),
+      page: () => const StudyPlannerView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<PlannerViewModel>(
+          () => PlannerViewModel(
+            plannerRepository: Get.find<PlannerRepository>(),
+            subjectRepository: Get.find<SubjectRepository>(),
+          ),
+        );
+      }),
     ),
     GetPage<void>(
       name: AppRoutes.addTask,
-      page: () => const _UpcomingRoutePlaceholder(
-        title: 'Add Study Task',
-        subtitle: 'Add & Edit Study Task will be implemented in Section 5.5.',
-      ),
+      page: () => const AddEditTaskView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<TaskFormViewModel>(
+          () => TaskFormViewModel(
+            plannerRepository: Get.find<PlannerRepository>(),
+            subjectRepository: Get.find<SubjectRepository>(),
+          ),
+        );
+      }),
     ),
     GetPage<void>(
       name: AppRoutes.editTask,
-      page: () => const _UpcomingRoutePlaceholder(
-        title: 'Edit Study Task',
-        subtitle: 'Add & Edit Study Task will be implemented in Section 5.5.',
-      ),
+      page: () => const AddEditTaskView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<TaskFormViewModel>(
+          () => TaskFormViewModel(
+            plannerRepository: Get.find<PlannerRepository>(),
+            subjectRepository: Get.find<SubjectRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.calendar,
+      page: () => const CalendarView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<CalendarViewModel>(
+          () => CalendarViewModel(
+            sessionRepository: Get.find<SessionRepository>(),
+            plannerRepository: Get.find<PlannerRepository>(),
+            subjectRepository: Get.find<SubjectRepository>(),
+          ),
+        );
+      }),
     ),
     GetPage<void>(
       name: AppRoutes.sessionHistory,
