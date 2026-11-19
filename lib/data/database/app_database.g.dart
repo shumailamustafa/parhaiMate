@@ -3808,6 +3808,17 @@ class $ActiveTimerStatesTable extends ActiveTimerStates
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _phasePausedRemainingSecondsMeta =
+      const VerificationMeta('phasePausedRemainingSeconds');
+  @override
+  late final GeneratedColumn<int> phasePausedRemainingSeconds =
+      GeneratedColumn<int>(
+        'phase_paused_remaining_seconds',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _accumulatedSecondsMeta =
       const VerificationMeta('accumulatedSeconds');
   @override
@@ -3934,6 +3945,7 @@ class $ActiveTimerStatesTable extends ActiveTimerStates
     phase,
     targetEndAt,
     segmentStartedAt,
+    phasePausedRemainingSeconds,
     accumulatedSeconds,
     plannedDurationSeconds,
     focusMinutes,
@@ -4003,6 +4015,15 @@ class $ActiveTimerStatesTable extends ActiveTimerStates
         segmentStartedAt.isAcceptableOrUnknown(
           data['segment_started_at']!,
           _segmentStartedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('phase_paused_remaining_seconds')) {
+      context.handle(
+        _phasePausedRemainingSecondsMeta,
+        phasePausedRemainingSeconds.isAcceptableOrUnknown(
+          data['phase_paused_remaining_seconds']!,
+          _phasePausedRemainingSecondsMeta,
         ),
       );
     }
@@ -4126,6 +4147,10 @@ class $ActiveTimerStatesTable extends ActiveTimerStates
         DriftSqlType.int,
         data['${effectivePrefix}segment_started_at'],
       ),
+      phasePausedRemainingSeconds: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}phase_paused_remaining_seconds'],
+      ),
       accumulatedSeconds: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}accumulated_seconds'],
@@ -4184,6 +4209,7 @@ class ActiveTimerState extends DataClass
   final String phase;
   final int? targetEndAt;
   final int? segmentStartedAt;
+  final int? phasePausedRemainingSeconds;
   final int accumulatedSeconds;
   final int plannedDurationSeconds;
   final int focusMinutes;
@@ -4202,6 +4228,7 @@ class ActiveTimerState extends DataClass
     required this.phase,
     this.targetEndAt,
     this.segmentStartedAt,
+    this.phasePausedRemainingSeconds,
     required this.accumulatedSeconds,
     required this.plannedDurationSeconds,
     required this.focusMinutes,
@@ -4230,6 +4257,11 @@ class ActiveTimerState extends DataClass
     }
     if (!nullToAbsent || segmentStartedAt != null) {
       map['segment_started_at'] = Variable<int>(segmentStartedAt);
+    }
+    if (!nullToAbsent || phasePausedRemainingSeconds != null) {
+      map['phase_paused_remaining_seconds'] = Variable<int>(
+        phasePausedRemainingSeconds,
+      );
     }
     map['accumulated_seconds'] = Variable<int>(accumulatedSeconds);
     map['planned_duration_seconds'] = Variable<int>(plannedDurationSeconds);
@@ -4263,6 +4295,10 @@ class ActiveTimerState extends DataClass
       segmentStartedAt: segmentStartedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(segmentStartedAt),
+      phasePausedRemainingSeconds:
+          phasePausedRemainingSeconds == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phasePausedRemainingSeconds),
       accumulatedSeconds: Value(accumulatedSeconds),
       plannedDurationSeconds: Value(plannedDurationSeconds),
       focusMinutes: Value(focusMinutes),
@@ -4291,6 +4327,9 @@ class ActiveTimerState extends DataClass
       phase: serializer.fromJson<String>(json['phase']),
       targetEndAt: serializer.fromJson<int?>(json['targetEndAt']),
       segmentStartedAt: serializer.fromJson<int?>(json['segmentStartedAt']),
+      phasePausedRemainingSeconds: serializer.fromJson<int?>(
+        json['phasePausedRemainingSeconds'],
+      ),
       accumulatedSeconds: serializer.fromJson<int>(json['accumulatedSeconds']),
       plannedDurationSeconds: serializer.fromJson<int>(
         json['plannedDurationSeconds'],
@@ -4316,6 +4355,9 @@ class ActiveTimerState extends DataClass
       'phase': serializer.toJson<String>(phase),
       'targetEndAt': serializer.toJson<int?>(targetEndAt),
       'segmentStartedAt': serializer.toJson<int?>(segmentStartedAt),
+      'phasePausedRemainingSeconds': serializer.toJson<int?>(
+        phasePausedRemainingSeconds,
+      ),
       'accumulatedSeconds': serializer.toJson<int>(accumulatedSeconds),
       'plannedDurationSeconds': serializer.toJson<int>(plannedDurationSeconds),
       'focusMinutes': serializer.toJson<int>(focusMinutes),
@@ -4337,6 +4379,7 @@ class ActiveTimerState extends DataClass
     String? phase,
     Value<int?> targetEndAt = const Value.absent(),
     Value<int?> segmentStartedAt = const Value.absent(),
+    Value<int?> phasePausedRemainingSeconds = const Value.absent(),
     int? accumulatedSeconds,
     int? plannedDurationSeconds,
     int? focusMinutes,
@@ -4357,6 +4400,9 @@ class ActiveTimerState extends DataClass
     segmentStartedAt: segmentStartedAt.present
         ? segmentStartedAt.value
         : this.segmentStartedAt,
+    phasePausedRemainingSeconds: phasePausedRemainingSeconds.present
+        ? phasePausedRemainingSeconds.value
+        : this.phasePausedRemainingSeconds,
     accumulatedSeconds: accumulatedSeconds ?? this.accumulatedSeconds,
     plannedDurationSeconds:
         plannedDurationSeconds ?? this.plannedDurationSeconds,
@@ -4382,6 +4428,9 @@ class ActiveTimerState extends DataClass
       segmentStartedAt: data.segmentStartedAt.present
           ? data.segmentStartedAt.value
           : this.segmentStartedAt,
+      phasePausedRemainingSeconds: data.phasePausedRemainingSeconds.present
+          ? data.phasePausedRemainingSeconds.value
+          : this.phasePausedRemainingSeconds,
       accumulatedSeconds: data.accumulatedSeconds.present
           ? data.accumulatedSeconds.value
           : this.accumulatedSeconds,
@@ -4419,6 +4468,7 @@ class ActiveTimerState extends DataClass
           ..write('phase: $phase, ')
           ..write('targetEndAt: $targetEndAt, ')
           ..write('segmentStartedAt: $segmentStartedAt, ')
+          ..write('phasePausedRemainingSeconds: $phasePausedRemainingSeconds, ')
           ..write('accumulatedSeconds: $accumulatedSeconds, ')
           ..write('plannedDurationSeconds: $plannedDurationSeconds, ')
           ..write('focusMinutes: $focusMinutes, ')
@@ -4442,6 +4492,7 @@ class ActiveTimerState extends DataClass
     phase,
     targetEndAt,
     segmentStartedAt,
+    phasePausedRemainingSeconds,
     accumulatedSeconds,
     plannedDurationSeconds,
     focusMinutes,
@@ -4464,6 +4515,8 @@ class ActiveTimerState extends DataClass
           other.phase == this.phase &&
           other.targetEndAt == this.targetEndAt &&
           other.segmentStartedAt == this.segmentStartedAt &&
+          other.phasePausedRemainingSeconds ==
+              this.phasePausedRemainingSeconds &&
           other.accumulatedSeconds == this.accumulatedSeconds &&
           other.plannedDurationSeconds == this.plannedDurationSeconds &&
           other.focusMinutes == this.focusMinutes &&
@@ -4484,6 +4537,7 @@ class ActiveTimerStatesCompanion extends UpdateCompanion<ActiveTimerState> {
   final Value<String> phase;
   final Value<int?> targetEndAt;
   final Value<int?> segmentStartedAt;
+  final Value<int?> phasePausedRemainingSeconds;
   final Value<int> accumulatedSeconds;
   final Value<int> plannedDurationSeconds;
   final Value<int> focusMinutes;
@@ -4502,6 +4556,7 @@ class ActiveTimerStatesCompanion extends UpdateCompanion<ActiveTimerState> {
     this.phase = const Value.absent(),
     this.targetEndAt = const Value.absent(),
     this.segmentStartedAt = const Value.absent(),
+    this.phasePausedRemainingSeconds = const Value.absent(),
     this.accumulatedSeconds = const Value.absent(),
     this.plannedDurationSeconds = const Value.absent(),
     this.focusMinutes = const Value.absent(),
@@ -4521,6 +4576,7 @@ class ActiveTimerStatesCompanion extends UpdateCompanion<ActiveTimerState> {
     required String phase,
     this.targetEndAt = const Value.absent(),
     this.segmentStartedAt = const Value.absent(),
+    this.phasePausedRemainingSeconds = const Value.absent(),
     this.accumulatedSeconds = const Value.absent(),
     this.plannedDurationSeconds = const Value.absent(),
     this.focusMinutes = const Value.absent(),
@@ -4542,6 +4598,7 @@ class ActiveTimerStatesCompanion extends UpdateCompanion<ActiveTimerState> {
     Expression<String>? phase,
     Expression<int>? targetEndAt,
     Expression<int>? segmentStartedAt,
+    Expression<int>? phasePausedRemainingSeconds,
     Expression<int>? accumulatedSeconds,
     Expression<int>? plannedDurationSeconds,
     Expression<int>? focusMinutes,
@@ -4561,6 +4618,8 @@ class ActiveTimerStatesCompanion extends UpdateCompanion<ActiveTimerState> {
       if (phase != null) 'phase': phase,
       if (targetEndAt != null) 'target_end_at': targetEndAt,
       if (segmentStartedAt != null) 'segment_started_at': segmentStartedAt,
+      if (phasePausedRemainingSeconds != null)
+        'phase_paused_remaining_seconds': phasePausedRemainingSeconds,
       if (accumulatedSeconds != null) 'accumulated_seconds': accumulatedSeconds,
       if (plannedDurationSeconds != null)
         'planned_duration_seconds': plannedDurationSeconds,
@@ -4583,6 +4642,7 @@ class ActiveTimerStatesCompanion extends UpdateCompanion<ActiveTimerState> {
     Value<String>? phase,
     Value<int?>? targetEndAt,
     Value<int?>? segmentStartedAt,
+    Value<int?>? phasePausedRemainingSeconds,
     Value<int>? accumulatedSeconds,
     Value<int>? plannedDurationSeconds,
     Value<int>? focusMinutes,
@@ -4602,6 +4662,8 @@ class ActiveTimerStatesCompanion extends UpdateCompanion<ActiveTimerState> {
       phase: phase ?? this.phase,
       targetEndAt: targetEndAt ?? this.targetEndAt,
       segmentStartedAt: segmentStartedAt ?? this.segmentStartedAt,
+      phasePausedRemainingSeconds:
+          phasePausedRemainingSeconds ?? this.phasePausedRemainingSeconds,
       accumulatedSeconds: accumulatedSeconds ?? this.accumulatedSeconds,
       plannedDurationSeconds:
           plannedDurationSeconds ?? this.plannedDurationSeconds,
@@ -4639,6 +4701,11 @@ class ActiveTimerStatesCompanion extends UpdateCompanion<ActiveTimerState> {
     }
     if (segmentStartedAt.present) {
       map['segment_started_at'] = Variable<int>(segmentStartedAt.value);
+    }
+    if (phasePausedRemainingSeconds.present) {
+      map['phase_paused_remaining_seconds'] = Variable<int>(
+        phasePausedRemainingSeconds.value,
+      );
     }
     if (accumulatedSeconds.present) {
       map['accumulated_seconds'] = Variable<int>(accumulatedSeconds.value);
@@ -4685,6 +4752,7 @@ class ActiveTimerStatesCompanion extends UpdateCompanion<ActiveTimerState> {
           ..write('phase: $phase, ')
           ..write('targetEndAt: $targetEndAt, ')
           ..write('segmentStartedAt: $segmentStartedAt, ')
+          ..write('phasePausedRemainingSeconds: $phasePausedRemainingSeconds, ')
           ..write('accumulatedSeconds: $accumulatedSeconds, ')
           ..write('plannedDurationSeconds: $plannedDurationSeconds, ')
           ..write('focusMinutes: $focusMinutes, ')
@@ -7620,6 +7688,7 @@ typedef $$ActiveTimerStatesTableCreateCompanionBuilder =
       required String phase,
       Value<int?> targetEndAt,
       Value<int?> segmentStartedAt,
+      Value<int?> phasePausedRemainingSeconds,
       Value<int> accumulatedSeconds,
       Value<int> plannedDurationSeconds,
       Value<int> focusMinutes,
@@ -7640,6 +7709,7 @@ typedef $$ActiveTimerStatesTableUpdateCompanionBuilder =
       Value<String> phase,
       Value<int?> targetEndAt,
       Value<int?> segmentStartedAt,
+      Value<int?> phasePausedRemainingSeconds,
       Value<int> accumulatedSeconds,
       Value<int> plannedDurationSeconds,
       Value<int> focusMinutes,
@@ -7738,6 +7808,11 @@ class $$ActiveTimerStatesTableFilterComposer
 
   ColumnFilters<int> get segmentStartedAt => $composableBuilder(
     column: $table.segmentStartedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get phasePausedRemainingSeconds => $composableBuilder(
+    column: $table.phasePausedRemainingSeconds,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7872,6 +7947,11 @@ class $$ActiveTimerStatesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get phasePausedRemainingSeconds => $composableBuilder(
+    column: $table.phasePausedRemainingSeconds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get accumulatedSeconds => $composableBuilder(
     column: $table.accumulatedSeconds,
     builder: (column) => ColumnOrderings(column),
@@ -7994,6 +8074,11 @@ class $$ActiveTimerStatesTableAnnotationComposer
 
   GeneratedColumn<int> get segmentStartedAt => $composableBuilder(
     column: $table.segmentStartedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get phasePausedRemainingSeconds => $composableBuilder(
+    column: $table.phasePausedRemainingSeconds,
     builder: (column) => column,
   );
 
@@ -8128,6 +8213,7 @@ class $$ActiveTimerStatesTableTableManager
                 Value<String> phase = const Value.absent(),
                 Value<int?> targetEndAt = const Value.absent(),
                 Value<int?> segmentStartedAt = const Value.absent(),
+                Value<int?> phasePausedRemainingSeconds = const Value.absent(),
                 Value<int> accumulatedSeconds = const Value.absent(),
                 Value<int> plannedDurationSeconds = const Value.absent(),
                 Value<int> focusMinutes = const Value.absent(),
@@ -8146,6 +8232,7 @@ class $$ActiveTimerStatesTableTableManager
                 phase: phase,
                 targetEndAt: targetEndAt,
                 segmentStartedAt: segmentStartedAt,
+                phasePausedRemainingSeconds: phasePausedRemainingSeconds,
                 accumulatedSeconds: accumulatedSeconds,
                 plannedDurationSeconds: plannedDurationSeconds,
                 focusMinutes: focusMinutes,
@@ -8166,6 +8253,7 @@ class $$ActiveTimerStatesTableTableManager
                 required String phase,
                 Value<int?> targetEndAt = const Value.absent(),
                 Value<int?> segmentStartedAt = const Value.absent(),
+                Value<int?> phasePausedRemainingSeconds = const Value.absent(),
                 Value<int> accumulatedSeconds = const Value.absent(),
                 Value<int> plannedDurationSeconds = const Value.absent(),
                 Value<int> focusMinutes = const Value.absent(),
@@ -8184,6 +8272,7 @@ class $$ActiveTimerStatesTableTableManager
                 phase: phase,
                 targetEndAt: targetEndAt,
                 segmentStartedAt: segmentStartedAt,
+                phasePausedRemainingSeconds: phasePausedRemainingSeconds,
                 accumulatedSeconds: accumulatedSeconds,
                 plannedDurationSeconds: plannedDurationSeconds,
                 focusMinutes: focusMinutes,

@@ -18,6 +18,8 @@ class ActiveTimerStates extends Table {
   IntColumn get targetEndAt => integer().named('target_end_at').nullable()();
   IntColumn get segmentStartedAt =>
       integer().named('segment_started_at').nullable()();
+  IntColumn get phasePausedRemainingSeconds =>
+      integer().named('phase_paused_remaining_seconds').nullable()();
   IntColumn get accumulatedSeconds =>
       integer().named('accumulated_seconds').withDefault(const Constant(0))();
   IntColumn get plannedDurationSeconds => integer()
