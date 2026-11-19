@@ -1,8 +1,15 @@
 import 'dart:io';
 
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:parhaimate/main.dart';
+import 'package:get/get.dart';
+import 'package:parhaimate/app/app.dart';
+import 'package:parhaimate/app/bindings/initial_binding.dart';
+import 'package:parhaimate/app/lifecycle/app_lifecycle_handler.dart';
+import 'package:parhaimate/app/routes/app_routes.dart';
+import 'package:parhaimate/core/services/timer_engine_service.dart';
+import 'package:parhaimate/data/database/app_database.dart';
 
 void main() {
   group('Stage 1 Foundation Verification', () {
@@ -86,11 +93,30 @@ void main() {
       }
     });
 
-    testWidgets('ParhaiMateApp renders pure white scaffold', (tester) async {
-      await tester.pumpWidget(const ParhaiMateApp());
-      expect(find.text('ParhaiMate'), findsOneWidget);
-      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-      expect(scaffold.backgroundColor, const Color(0xFFFFFFFF));
+    testWidgets('ParhaiMateRootApp renders pure white scaffold', (tester) async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      await tester.pumpWidget(
+        ParhaiMateRootApp(
+          initialRoute: AppRoutes.components,
+          initialBinding: InitialBinding(database: db),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Component Library'), findsOneWidget);
+      final scaffoldContext = tester.element(find.byType(Scaffold));
+      expect(
+        Theme.of(scaffoldContext).scaffoldBackgroundColor,
+        const Color(0xFFFFFFFF),
+      );
+
+      if (Get.isRegistered<AppLifecycleHandler>()) {
+        Get.find<AppLifecycleHandler>().detach();
+      }
+      if (Get.isRegistered<TimerEngineService>()) {
+        Get.find<TimerEngineService>().onClose();
+      }
+      Get.reset();
+      await db.close();
     });
   });
 }
