@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/date_time_utils.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../subjects/views/subjects_view.dart';
 import '../../timer/views/study_timer_view.dart';
 import '../viewmodels/main_shell_viewmodel.dart';
 import 'home_view.dart';
@@ -81,12 +82,7 @@ class MainShellView extends GetView<MainShellViewModel> {
                 children: <Widget>[
                   const HomeView(),
                   timerTabBuilder?.call(context) ?? const StudyTimerView(),
-                  subjectsTabBuilder?.call(context) ??
-                      const _UpcomingSectionTab(
-                        title: 'My Subjects',
-                        subtitle:
-                            'Section 5.4 will render your subjects list, search, and targets here.',
-                      ),
+                  subjectsTabBuilder?.call(context) ?? const SubjectsView(),
                   progressTabBuilder?.call(context) ??
                       const _UpcomingSectionTab(
                         title: 'Statistics',

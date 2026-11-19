@@ -17,6 +17,7 @@ import 'package:parhaimate/domain/repositories/repositories.dart';
 import 'package:parhaimate/features/home/viewmodels/home_viewmodel.dart';
 import 'package:parhaimate/features/home/viewmodels/main_shell_viewmodel.dart';
 import 'package:parhaimate/features/home/views/main_shell_view.dart';
+import 'package:parhaimate/features/subjects/viewmodels/subjects_viewmodel.dart';
 import 'package:parhaimate/features/timer/viewmodels/study_timer_viewmodel.dart';
 
 Future<void> _disposeWidgetTree(WidgetTester tester) async {
@@ -152,6 +153,13 @@ void main() {
           settingsRepository: Get.find<SettingsRepository>(),
         ),
       );
+      Get.put<SubjectsViewModel>(
+        SubjectsViewModel(
+          subjectRepository: subjectRepo,
+          sessionRepository: sessionRepo,
+          nowProvider: () => fixedNow,
+        ),
+      );
 
       await tester.pumpWidget(
         GetMaterialApp(
@@ -182,6 +190,20 @@ void main() {
       final taskAfter = (await plannerRepo.getAllTasks()).first;
       expect(taskAfter.isCompleted, isTrue);
 
+      // Tapping another weekday in the date strip dynamically updates selected date & day stats
+      await tester.ensureVisible(find.text('13'));
+      await tester.tap(find.text('13'));
+      await tester.pumpAndSettle();
+      expect(find.text('Wednesday, 13 May'), findsOneWidget);
+      expect(find.text("Day's Progress"), findsOneWidget);
+      expect(find.text('0%'), findsOneWidget);
+
+      // Tap back to 12 May
+      await tester.tap(find.text('12'));
+      await tester.pumpAndSettle();
+      expect(find.text('Tuesday, 12 May'), findsOneWidget);
+      expect(find.text("Today's Progress"), findsOneWidget);
+
       // Switch tabs via bottom nav
       await tester.tap(find.text('Timer'));
       await tester.pumpAndSettle();
@@ -189,7 +211,7 @@ void main() {
 
       await tester.tap(find.text('Subjects'));
       await tester.pumpAndSettle();
-      expect(find.text('My Subjects (Upcoming Section)'), findsOneWidget);
+      expect(find.text('Active (2)'), findsOneWidget);
 
       await tester.tap(find.text('Progress'));
       await tester.pumpAndSettle();

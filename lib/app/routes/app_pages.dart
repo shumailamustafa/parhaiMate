@@ -14,6 +14,12 @@ import '../../features/onboarding/viewmodels/splash_viewmodel.dart';
 import '../../features/onboarding/views/onboarding_view.dart';
 import '../../features/onboarding/views/splash_view.dart';
 import '../../features/settings/views/component_library_view.dart';
+import '../../features/subjects/viewmodels/subject_details_viewmodel.dart';
+import '../../features/subjects/viewmodels/subject_form_viewmodel.dart';
+import '../../features/subjects/viewmodels/subjects_viewmodel.dart';
+import '../../features/subjects/views/add_edit_subject_view.dart';
+import '../../features/subjects/views/subject_details_view.dart';
+import '../../features/subjects/views/subjects_view.dart';
 import '../../features/timer/viewmodels/active_focus_viewmodel.dart';
 import '../../features/timer/viewmodels/session_setup_viewmodel.dart';
 import '../../features/timer/viewmodels/session_summary_viewmodel.dart';
@@ -68,6 +74,54 @@ abstract final class AppPages {
           () => StudyTimerViewModel(
             subjectRepository: Get.find<SubjectRepository>(),
             settingsRepository: Get.find<SettingsRepository>(),
+          ),
+        );
+        Get.lazyPut<SubjectsViewModel>(
+          () => SubjectsViewModel(
+            subjectRepository: Get.find<SubjectRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.subjects,
+      page: () => const Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: PmAppBar(title: 'My Subjects'),
+        body: SubjectsView(showTitleHeader: false),
+      ),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<SubjectsViewModel>(
+          () => SubjectsViewModel(
+            subjectRepository: Get.find<SubjectRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.subjectDetails,
+      page: () => const SubjectDetailsView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<SubjectDetailsViewModel>(
+          () => SubjectDetailsViewModel(
+            subjectRepository: Get.find<SubjectRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+            plannerRepository: Get.find<PlannerRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.editSubject,
+      page: () => const AddEditSubjectView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<SubjectFormViewModel>(
+          () => SubjectFormViewModel(
+            subjectRepository: Get.find<SubjectRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+            plannerRepository: Get.find<PlannerRepository>(),
           ),
         );
       }),
@@ -141,10 +195,16 @@ abstract final class AppPages {
     ),
     GetPage<void>(
       name: AppRoutes.addSubject,
-      page: () => const _UpcomingRoutePlaceholder(
-        title: 'Add Subject',
-        subtitle: 'Add & Edit Subject will be implemented in Section 5.4.',
-      ),
+      page: () => const AddEditSubjectView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<SubjectFormViewModel>(
+          () => SubjectFormViewModel(
+            subjectRepository: Get.find<SubjectRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+            plannerRepository: Get.find<PlannerRepository>(),
+          ),
+        );
+      }),
     ),
     GetPage<void>(
       name: AppRoutes.planner,

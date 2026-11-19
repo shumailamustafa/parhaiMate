@@ -73,8 +73,29 @@ void main() {
       // Select Focus Timer mode and 45 min chip without choosing any subject.
       await tester.tap(find.text('Focus Timer'));
       await tester.pumpAndSettle();
+      expect(find.text('Select Duration'), findsOneWidget);
+
+      // Switch to Stopwatch -> Select Duration dynamically hides; back to Focus Timer shows it again.
+      await tester.tap(find.text('Stopwatch'));
+      await tester.pumpAndSettle();
+      expect(find.text('Select Duration'), findsNothing);
+
+      await tester.tap(find.text('Focus Timer'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('45 min'));
       await tester.pumpAndSettle();
+
+      // Open Custom duration sheet, increment stepper (45 -> 50 min), and verify chip + card update live!
+      await tester.ensureVisible(find.text('Custom'));
+      await tester.tap(find.text('Custom'));
+      await tester.pumpAndSettle();
+      expect(find.text('Custom Duration'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.add_rounded).last);
+      await tester.pumpAndSettle();
+      expect(find.text('50 min'), findsOneWidget);
+      await tester.tap(find.text('Apply'));
+      await tester.pumpAndSettle();
+      expect(find.text('Custom (50 min)'), findsOneWidget);
 
       await tester.ensureVisible(find.text('Start Studying'));
       await tester.pumpAndSettle();
@@ -83,7 +104,7 @@ void main() {
 
       expect(find.text('Set Up Your Session'), findsOneWidget);
       expect(find.text('General Study'), findsOneWidget);
-      expect(find.text('45m'), findsOneWidget);
+      expect(find.text('50m'), findsOneWidget);
 
       await _disposeWidgetTree(tester);
     });
