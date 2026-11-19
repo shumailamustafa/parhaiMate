@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/services/timer_engine_service.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/widgets.dart';
 import '../../domain/repositories/repositories.dart';
@@ -13,6 +14,14 @@ import '../../features/onboarding/viewmodels/splash_viewmodel.dart';
 import '../../features/onboarding/views/onboarding_view.dart';
 import '../../features/onboarding/views/splash_view.dart';
 import '../../features/settings/views/component_library_view.dart';
+import '../../features/timer/viewmodels/active_focus_viewmodel.dart';
+import '../../features/timer/viewmodels/session_setup_viewmodel.dart';
+import '../../features/timer/viewmodels/session_summary_viewmodel.dart';
+import '../../features/timer/viewmodels/study_timer_viewmodel.dart';
+import '../../features/timer/views/active_focus_view.dart';
+import '../../features/timer/views/session_setup_view.dart';
+import '../../features/timer/views/session_summary_view.dart';
+import '../../features/timer/views/study_timer_view.dart';
 import 'app_routes.dart';
 
 abstract final class AppPages {
@@ -55,25 +64,79 @@ abstract final class AppPages {
             goalStreakRepository: Get.find<GoalStreakRepository>(),
           ),
         );
+        Get.lazyPut<StudyTimerViewModel>(
+          () => StudyTimerViewModel(
+            subjectRepository: Get.find<SubjectRepository>(),
+            settingsRepository: Get.find<SettingsRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.timer,
+      page: () => const Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: PmAppBar(title: 'Study Timer'),
+        body: StudyTimerView(showTitleHeader: false),
+      ),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<StudyTimerViewModel>(
+          () => StudyTimerViewModel(
+            subjectRepository: Get.find<SubjectRepository>(),
+            settingsRepository: Get.find<SettingsRepository>(),
+          ),
+        );
       }),
     ),
     GetPage<void>(
       name: AppRoutes.components,
       page: () => const ComponentLibraryView(),
     ),
-    // Secondary routes referenced from Home Dashboard (implemented in 5.3 - 5.7).
     GetPage<void>(
       name: AppRoutes.sessionSetup,
-      page: () => const _UpcomingRoutePlaceholder(
-        title: 'Set Up Your Session',
-        subtitle: 'Session Setup will be implemented in Section 5.3.',
-      ),
+      page: () => const SessionSetupView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<SessionSetupViewModel>(
+          () => SessionSetupViewModel(
+            subjectRepository: Get.find<SubjectRepository>(),
+            settingsRepository: Get.find<SettingsRepository>(),
+            timerEngine: Get.find<TimerEngineService>(),
+          ),
+        );
+      }),
     ),
     GetPage<void>(
       name: AppRoutes.activeFocus,
+      page: () => const ActiveFocusView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<ActiveFocusViewModel>(
+          () => ActiveFocusViewModel(
+            timerEngine: Get.find<TimerEngineService>(),
+            subjectRepository: Get.find<SubjectRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.sessionSummary,
+      page: () => const SessionSummaryView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<SessionSummaryViewModel>(
+          () => SessionSummaryViewModel(
+            sessionRepository: Get.find<SessionRepository>(),
+            subjectRepository: Get.find<SubjectRepository>(),
+            goalStreakRepository: Get.find<GoalStreakRepository>(),
+            timerEngine: Get.find<TimerEngineService>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.timerPresets,
       page: () => const _UpcomingRoutePlaceholder(
-        title: 'Active Focus',
-        subtitle: 'Active Focus timer view will be implemented in Section 5.3.',
+        title: 'Timer Presets',
+        subtitle: 'Timer Preset Management will be implemented in Section 5.7.',
       ),
     ),
     GetPage<void>(

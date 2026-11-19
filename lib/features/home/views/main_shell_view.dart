@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/date_time_utils.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../timer/views/study_timer_view.dart';
 import '../viewmodels/main_shell_viewmodel.dart';
 import 'home_view.dart';
 
@@ -79,12 +80,7 @@ class MainShellView extends GetView<MainShellViewModel> {
                 index: index,
                 children: <Widget>[
                   const HomeView(),
-                  timerTabBuilder?.call(context) ??
-                      const _UpcomingSectionTab(
-                        title: 'Study Timer',
-                        subtitle:
-                            'Section 5.3 will render Focus Timer, Stopwatch, and Pomodoro modes here.',
-                      ),
+                  timerTabBuilder?.call(context) ?? const StudyTimerView(),
                   subjectsTabBuilder?.call(context) ??
                       const _UpcomingSectionTab(
                         title: 'My Subjects',

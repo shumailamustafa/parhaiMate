@@ -484,7 +484,7 @@ class TimerEngineService extends GetxService {
   void _startUiTicker() {
     _stopUiTicker();
     _uiTicker = Timer.periodic(
-      const Duration(seconds: 1),
+      const Duration(milliseconds: 500),
       (_) => unawaited(reconcile()),
     );
   }

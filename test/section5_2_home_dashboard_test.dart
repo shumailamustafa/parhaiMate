@@ -17,6 +17,7 @@ import 'package:parhaimate/domain/repositories/repositories.dart';
 import 'package:parhaimate/features/home/viewmodels/home_viewmodel.dart';
 import 'package:parhaimate/features/home/viewmodels/main_shell_viewmodel.dart';
 import 'package:parhaimate/features/home/views/main_shell_view.dart';
+import 'package:parhaimate/features/timer/viewmodels/study_timer_viewmodel.dart';
 
 Future<void> _disposeWidgetTree(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
@@ -145,6 +146,12 @@ void main() {
           nowProvider: () => fixedNow,
         ),
       );
+      Get.put<StudyTimerViewModel>(
+        StudyTimerViewModel(
+          subjectRepository: subjectRepo,
+          settingsRepository: Get.find<SettingsRepository>(),
+        ),
+      );
 
       await tester.pumpWidget(
         GetMaterialApp(
@@ -178,7 +185,7 @@ void main() {
       // Switch tabs via bottom nav
       await tester.tap(find.text('Timer'));
       await tester.pumpAndSettle();
-      expect(find.text('Study Timer (Upcoming Section)'), findsOneWidget);
+      expect(find.text('Choose your focus mode'), findsOneWidget);
 
       await tester.tap(find.text('Subjects'));
       await tester.pumpAndSettle();
