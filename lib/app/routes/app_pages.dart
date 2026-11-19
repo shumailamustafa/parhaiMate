@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/services/timer_engine_service.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
-import '../../core/theme/app_typography.dart';
 import '../../core/widgets/widgets.dart';
 import '../../domain/repositories/repositories.dart';
+import '../../features/home/viewmodels/home_viewmodel.dart';
+import '../../features/home/viewmodels/main_shell_viewmodel.dart';
+import '../../features/home/views/main_shell_view.dart';
 import '../../features/onboarding/viewmodels/onboarding_viewmodel.dart';
 import '../../features/onboarding/viewmodels/splash_viewmodel.dart';
 import '../../features/onboarding/views/onboarding_view.dart';
@@ -38,67 +39,119 @@ abstract final class AppPages {
       }),
     ),
     GetPage<void>(
+      name: AppRoutes.home,
+      page: () => const MainShellView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<MainShellViewModel>(
+          () => MainShellViewModel(
+            timerEngine: Get.find<TimerEngineService>(),
+          ),
+        );
+        Get.lazyPut<HomeViewModel>(
+          () => HomeViewModel(
+            subjectRepository: Get.find<SubjectRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+            plannerRepository: Get.find<PlannerRepository>(),
+            goalStreakRepository: Get.find<GoalStreakRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
       name: AppRoutes.components,
       page: () => const ComponentLibraryView(),
     ),
-    // Section 5.1 initial home shell preview (replaced in Section 5.2).
+    // Secondary routes referenced from Home Dashboard (implemented in 5.3 - 5.7).
     GetPage<void>(
-      name: AppRoutes.home,
-      page: () => const _Section51HomePreview(),
+      name: AppRoutes.sessionSetup,
+      page: () => const _UpcomingRoutePlaceholder(
+        title: 'Set Up Your Session',
+        subtitle: 'Session Setup will be implemented in Section 5.3.',
+      ),
     ),
     GetPage<void>(
       name: AppRoutes.activeFocus,
-      page: () => const _Section51HomePreview(),
+      page: () => const _UpcomingRoutePlaceholder(
+        title: 'Active Focus',
+        subtitle: 'Active Focus timer view will be implemented in Section 5.3.',
+      ),
+    ),
+    GetPage<void>(
+      name: AppRoutes.addSubject,
+      page: () => const _UpcomingRoutePlaceholder(
+        title: 'Add Subject',
+        subtitle: 'Add & Edit Subject will be implemented in Section 5.4.',
+      ),
+    ),
+    GetPage<void>(
+      name: AppRoutes.planner,
+      page: () => const _UpcomingRoutePlaceholder(
+        title: 'Study Planner',
+        subtitle: 'Study Planner will be implemented in Section 5.5.',
+      ),
+    ),
+    GetPage<void>(
+      name: AppRoutes.addTask,
+      page: () => const _UpcomingRoutePlaceholder(
+        title: 'Add Study Task',
+        subtitle: 'Add & Edit Study Task will be implemented in Section 5.5.',
+      ),
+    ),
+    GetPage<void>(
+      name: AppRoutes.editTask,
+      page: () => const _UpcomingRoutePlaceholder(
+        title: 'Edit Study Task',
+        subtitle: 'Add & Edit Study Task will be implemented in Section 5.5.',
+      ),
+    ),
+    GetPage<void>(
+      name: AppRoutes.sessionHistory,
+      page: () => const _UpcomingRoutePlaceholder(
+        title: 'Session History',
+        subtitle: 'Session History will be implemented in Section 5.6.',
+      ),
+    ),
+    GetPage<void>(
+      name: AppRoutes.settings,
+      page: () => _UpcomingRoutePlaceholder(
+        title: 'Settings',
+        subtitle: 'Full Settings & Backup will be implemented in Section 5.7.',
+        extraActionLabel: 'Open Component Library',
+        onExtraAction: () => Get.toNamed<void>(AppRoutes.components),
+      ),
     ),
   ];
 }
 
-class _Section51HomePreview extends StatelessWidget {
-  const _Section51HomePreview();
+class _UpcomingRoutePlaceholder extends StatelessWidget {
+  const _UpcomingRoutePlaceholder({
+    required this.title,
+    required this.subtitle,
+    this.extraActionLabel,
+    this.onExtraAction,
+  });
+
+  final String title;
+  final String subtitle;
+  final String? extraActionLabel;
+  final VoidCallback? onExtraAction;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const PmAppBar(title: 'ParhaiMate', showBack: false),
+      appBar: PmAppBar(title: title),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.screenPadding),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            const PmGreyCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text('Section 5.1 Ready', style: AppTypography.section18),
-                  SizedBox(height: 8),
-                  Text(
-                    'Onboarding completed. Use the actions below to inspect the Design System Component Library or replay Onboarding.',
-                    style: AppTypography.secondary14,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            PmPrimaryButton(
-              label: 'Open Component Library',
-              icon: Icons.widgets_outlined,
-              onPressed: () => Get.toNamed<void>(AppRoutes.components),
-            ),
-            const SizedBox(height: 12),
-            PmSecondaryButton(
-              label: 'Replay Onboarding',
-              icon: Icons.refresh_rounded,
-              onPressed: () => Get.offAllNamed<void>(AppRoutes.onboarding),
-            ),
-          ],
+        child: Center(
+          child: PmEmptyState(
+            icon: Icons.construction_outlined,
+            title: title,
+            subtitle: subtitle,
+            actionLabel: extraActionLabel,
+            onAction: onExtraAction,
+          ),
         ),
       ),
-      bottomNavigationBar: PmBottomNav(
-        currentIndex: 0,
-        onTap: (_) {},
-      ),
-      backgroundColor: AppColors.background,
     );
   }
 }

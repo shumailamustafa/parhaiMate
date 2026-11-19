@@ -80,6 +80,22 @@ abstract final class DateTimeUtils {
     return DateFormat('h:mm a').format(dateTime.toLocal());
   }
 
+  static String formatTaskTimeLabel(String? scheduledTime) {
+    if (scheduledTime == null || scheduledTime.trim().isEmpty) {
+      return '';
+    }
+    final trimmed = scheduledTime.trim();
+    final parts = trimmed.split(':');
+    if (parts.length == 2) {
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      if (h != null && m != null && h >= 0 && h < 24 && m >= 0 && m < 60) {
+        return DateFormat('h:mm a').format(DateTime(2026, 1, 1, h, m));
+      }
+    }
+    return trimmed;
+  }
+
   static String formatFullDate(DateTime dateTime) {
     return DateFormat('EEEE, d MMMM').format(dateTime.toLocal());
   }

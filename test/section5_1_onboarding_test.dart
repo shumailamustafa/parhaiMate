@@ -10,6 +10,20 @@ import 'package:parhaimate/core/services/timer_engine_service.dart';
 import 'package:parhaimate/data/database/app_database.dart';
 import 'package:parhaimate/domain/repositories/repositories.dart';
 
+Future<void> _disposeWidgetTree(WidgetTester tester) async {
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump();
+  if (Get.isRegistered<AppLifecycleHandler>()) {
+    Get.find<AppLifecycleHandler>().detach();
+  }
+  if (Get.isRegistered<TimerEngineService>()) {
+    Get.find<TimerEngineService>().onClose();
+  }
+  Get.reset();
+  // Allow Drift's zero-duration StreamQueryStore cleanup timer to run inside FakeAsync.
+  await tester.pump(const Duration(milliseconds: 50));
+}
+
 void main() {
   late AppDatabase db;
 
@@ -77,13 +91,14 @@ void main() {
       await tester.tap(find.text('Get Started'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Section 5.1 Ready'), findsOneWidget);
+      expect(find.text('Ready to make today productive?'), findsOneWidget);
       final completed =
           await Get.find<SettingsRepository>().isOnboardingCompleted();
       expect(completed, isTrue);
+      await _disposeWidgetTree(tester);
     });
 
-    testWidgets('Onboarding Skip completes onboarding and navigates to Home preview',
+    testWidgets('Onboarding Skip completes onboarding and navigates to Home Dashboard',
         (tester) async {
       await tester.pumpWidget(
         ParhaiMateRootApp(
@@ -96,10 +111,11 @@ void main() {
       await tester.tap(find.text('Skip'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Section 5.1 Ready'), findsOneWidget);
+      expect(find.text('Ready to make today productive?'), findsOneWidget);
       final completed =
           await Get.find<SettingsRepository>().isOnboardingCompleted();
       expect(completed, isTrue);
+      await _disposeWidgetTree(tester);
     });
 
     testWidgets('Component Library route renders interactively', (tester) async {
@@ -121,6 +137,7 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
       expect(find.text('No sessions yet'), findsOneWidget);
+      await _disposeWidgetTree(tester);
     });
   });
 }
