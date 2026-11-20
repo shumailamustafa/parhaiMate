@@ -22,27 +22,26 @@ class PmProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final clamped = progress.clamp(0.0, 1.0);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Container(
-          height: height,
-          width: double.infinity,
+    return Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: trackColor,
+        borderRadius: BorderRadius.circular(height),
+      ),
+      alignment: Alignment.centerLeft,
+      child: AnimatedFractionallySizedBox(
+        duration: const Duration(milliseconds: 220),
+        alignment: Alignment.centerLeft,
+        widthFactor: clamped,
+        heightFactor: 1,
+        child: Container(
           decoration: BoxDecoration(
-            color: trackColor,
+            color: fillColor,
             borderRadius: BorderRadius.circular(height),
           ),
-          alignment: Alignment.centerLeft,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            width: constraints.maxWidth * clamped,
-            height: height,
-            decoration: BoxDecoration(
-              color: fillColor,
-              borderRadius: BorderRadius.circular(height),
-            ),
-          ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

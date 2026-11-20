@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/date_time_utils.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../statistics/views/statistics_view.dart';
 import '../../subjects/views/subjects_view.dart';
 import '../../timer/views/study_timer_view.dart';
 import '../viewmodels/main_shell_viewmodel.dart';
@@ -83,12 +84,7 @@ class MainShellView extends GetView<MainShellViewModel> {
                   const HomeView(),
                   timerTabBuilder?.call(context) ?? const StudyTimerView(),
                   subjectsTabBuilder?.call(context) ?? const SubjectsView(),
-                  progressTabBuilder?.call(context) ??
-                      const _UpcomingSectionTab(
-                        title: 'Statistics',
-                        subtitle:
-                            'Section 5.6 will render charts, goals, streaks, and achievements here.',
-                      ),
+                  progressTabBuilder?.call(context) ?? const StatisticsView(),
                 ],
               ),
             ),
@@ -100,36 +96,5 @@ class MainShellView extends GetView<MainShellViewModel> {
         ),
       );
     });
-  }
-}
-
-class _UpcomingSectionTab extends StatelessWidget {
-  const _UpcomingSectionTab({
-    required this.title,
-    required this.subtitle,
-  });
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(title, style: AppTypography.title24),
-            const SizedBox(height: 16),
-            PmEmptyState(
-              icon: Icons.construction_outlined,
-              title: '$title (Upcoming Section)',
-              subtitle: subtitle,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

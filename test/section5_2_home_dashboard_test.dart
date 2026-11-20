@@ -17,6 +17,7 @@ import 'package:parhaimate/domain/repositories/repositories.dart';
 import 'package:parhaimate/features/home/viewmodels/home_viewmodel.dart';
 import 'package:parhaimate/features/home/viewmodels/main_shell_viewmodel.dart';
 import 'package:parhaimate/features/home/views/main_shell_view.dart';
+import 'package:parhaimate/features/statistics/viewmodels/statistics_viewmodel.dart';
 import 'package:parhaimate/features/subjects/viewmodels/subjects_viewmodel.dart';
 import 'package:parhaimate/features/timer/viewmodels/study_timer_viewmodel.dart';
 
@@ -160,6 +161,15 @@ void main() {
           nowProvider: () => fixedNow,
         ),
       );
+      Get.put<StatisticsViewModel>(
+        StatisticsViewModel(
+          sessionRepository: sessionRepo,
+          subjectRepository: subjectRepo,
+          goalStreakRepository: goalRepo,
+          achievementRepository: Get.find<AchievementRepository>(),
+          nowProvider: () => fixedNow,
+        ),
+      );
 
       await tester.pumpWidget(
         GetMaterialApp(
@@ -215,7 +225,7 @@ void main() {
 
       await tester.tap(find.text('Progress'));
       await tester.pumpAndSettle();
-      expect(find.text('Statistics (Upcoming Section)'), findsOneWidget);
+      expect(find.text('Overview'), findsOneWidget);
 
       // Return to Home and verify Settings route navigation works
       await tester.tap(find.text('Home'));

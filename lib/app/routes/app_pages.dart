@@ -6,8 +6,12 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/widgets.dart';
 import '../../domain/repositories/repositories.dart';
+import '../../features/achievements/viewmodels/achievements_viewmodel.dart';
+import '../../features/achievements/views/achievements_view.dart';
 import '../../features/calendar/viewmodels/calendar_viewmodel.dart';
 import '../../features/calendar/views/calendar_view.dart';
+import '../../features/goals/viewmodels/goals_viewmodel.dart';
+import '../../features/goals/views/goals_streaks_view.dart';
 import '../../features/home/viewmodels/home_viewmodel.dart';
 import '../../features/home/viewmodels/main_shell_viewmodel.dart';
 import '../../features/home/views/main_shell_view.dart';
@@ -20,6 +24,10 @@ import '../../features/planner/viewmodels/task_form_viewmodel.dart';
 import '../../features/planner/views/add_edit_task_view.dart';
 import '../../features/planner/views/study_planner_view.dart';
 import '../../features/settings/views/component_library_view.dart';
+import '../../features/statistics/viewmodels/session_history_viewmodel.dart';
+import '../../features/statistics/viewmodels/statistics_viewmodel.dart';
+import '../../features/statistics/views/session_history_view.dart';
+import '../../features/statistics/views/statistics_view.dart';
 import '../../features/subjects/viewmodels/subject_details_viewmodel.dart';
 import '../../features/subjects/viewmodels/subject_form_viewmodel.dart';
 import '../../features/subjects/viewmodels/subjects_viewmodel.dart';
@@ -86,6 +94,32 @@ abstract final class AppPages {
           () => SubjectsViewModel(
             subjectRepository: Get.find<SubjectRepository>(),
             sessionRepository: Get.find<SessionRepository>(),
+          ),
+        );
+        Get.lazyPut<StatisticsViewModel>(
+          () => StatisticsViewModel(
+            sessionRepository: Get.find<SessionRepository>(),
+            subjectRepository: Get.find<SubjectRepository>(),
+            goalStreakRepository: Get.find<GoalStreakRepository>(),
+            achievementRepository: Get.find<AchievementRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.progress,
+      page: () => const Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: PmAppBar(title: 'Statistics'),
+        body: StatisticsView(showTitleHeader: false),
+      ),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<StatisticsViewModel>(
+          () => StatisticsViewModel(
+            sessionRepository: Get.find<SessionRepository>(),
+            subjectRepository: Get.find<SubjectRepository>(),
+            goalStreakRepository: Get.find<GoalStreakRepository>(),
+            achievementRepository: Get.find<AchievementRepository>(),
           ),
         );
       }),
@@ -263,10 +297,38 @@ abstract final class AppPages {
     ),
     GetPage<void>(
       name: AppRoutes.sessionHistory,
-      page: () => const _UpcomingRoutePlaceholder(
-        title: 'Session History',
-        subtitle: 'Session History will be implemented in Section 5.6.',
-      ),
+      page: () => const SessionHistoryView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<SessionHistoryViewModel>(
+          () => SessionHistoryViewModel(
+            sessionRepository: Get.find<SessionRepository>(),
+            subjectRepository: Get.find<SubjectRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.goals,
+      page: () => const GoalsStreaksView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<GoalsViewModel>(
+          () => GoalsViewModel(
+            goalStreakRepository: Get.find<GoalStreakRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.achievements,
+      page: () => const AchievementsView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<AchievementsViewModel>(
+          () => AchievementsViewModel(
+            achievementRepository: Get.find<AchievementRepository>(),
+          ),
+        );
+      }),
     ),
     GetPage<void>(
       name: AppRoutes.settings,
