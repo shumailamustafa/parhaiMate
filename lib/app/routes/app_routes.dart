@@ -29,5 +29,6 @@ abstract final class AppRoutes {
   static const String importBackup = '/settings/backup/import';
   static const String studyReport = '/settings/report';
   static const String privacyPolicy = '/settings/privacy';
+  static const String navigationFlow = '/navigation-flow';
   static const String components = '/components';
 }

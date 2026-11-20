@@ -4,6 +4,8 @@ import '../../core/services/timer_engine_service.dart';
 import '../../data/database/app_database.dart';
 import '../../data/repositories/drift_repositories.dart';
 import '../../domain/repositories/repositories.dart';
+import '../../features/backup/services/backup_service.dart';
+import '../../features/backup/services/report_service.dart';
 import '../lifecycle/app_lifecycle_handler.dart';
 
 /// Registers long-lived core singletons (database, repositories, timer engine).
@@ -38,6 +40,23 @@ class InitialBinding extends Bindings {
       activeTimerDao: db.activeTimerDao,
     );
     Get.put<TimerEngineService>(timerEngine, permanent: true);
+
+    Get.put<BackupService>(
+      BackupService(
+        database: db,
+        goalStreakRepository: goalStreakRepo,
+        settingsRepository: settingsRepo,
+        achievementRepository: achievementRepo,
+      ),
+      permanent: true,
+    );
+    Get.put<ReportService>(
+      ReportService(
+        sessionRepository: sessionRepo,
+        subjectRepository: subjectRepo,
+      ),
+      permanent: true,
+    );
 
     final lifecycle = AppLifecycleHandler(timerEngine)..attach();
     Get.put<AppLifecycleHandler>(lifecycle, permanent: true);

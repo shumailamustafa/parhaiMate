@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../shared/widgets/widgets.dart';
 import '../viewmodels/splash_viewmodel.dart';
 import '../widgets/parhaimate_logo.dart';
 
@@ -64,7 +65,9 @@ class SplashView extends GetView<SplashViewModel> {
                 }),
               );
             }),
-            const SizedBox(height: 44),
+            const SizedBox(height: 24),
+            const PoweredByCodingDistrict(),
+            const SizedBox(height: 28),
           ],
         ),
       ),

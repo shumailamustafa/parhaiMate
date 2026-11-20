@@ -3,11 +3,17 @@ import 'package:get/get.dart';
 
 import '../../core/services/timer_engine_service.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/widgets.dart';
 import '../../domain/repositories/repositories.dart';
 import '../../features/achievements/viewmodels/achievements_viewmodel.dart';
 import '../../features/achievements/views/achievements_view.dart';
+import '../../features/backup/services/backup_service.dart';
+import '../../features/backup/services/report_service.dart';
+import '../../features/backup/viewmodels/backup_viewmodel.dart';
+import '../../features/backup/viewmodels/export_report_viewmodel.dart';
+import '../../features/backup/views/export_backup_view.dart';
+import '../../features/backup/views/export_report_view.dart';
+import '../../features/backup/views/import_backup_view.dart';
 import '../../features/calendar/viewmodels/calendar_viewmodel.dart';
 import '../../features/calendar/views/calendar_view.dart';
 import '../../features/goals/viewmodels/goals_viewmodel.dart';
@@ -23,7 +29,15 @@ import '../../features/planner/viewmodels/planner_viewmodel.dart';
 import '../../features/planner/viewmodels/task_form_viewmodel.dart';
 import '../../features/planner/views/add_edit_task_view.dart';
 import '../../features/planner/views/study_planner_view.dart';
+import '../../features/settings/viewmodels/goal_config_viewmodel.dart';
+import '../../features/settings/viewmodels/presets_viewmodel.dart';
+import '../../features/settings/viewmodels/settings_viewmodel.dart';
 import '../../features/settings/views/component_library_view.dart';
+import '../../features/settings/views/goal_config_views.dart';
+import '../../features/settings/views/navigation_flow_view.dart';
+import '../../features/settings/views/presets_views.dart';
+import '../../features/settings/views/privacy_policy_view.dart';
+import '../../features/settings/views/settings_view.dart';
 import '../../features/statistics/viewmodels/session_history_viewmodel.dart';
 import '../../features/statistics/viewmodels/statistics_viewmodel.dart';
 import '../../features/statistics/views/session_history_view.dart';
@@ -228,10 +242,36 @@ abstract final class AppPages {
     ),
     GetPage<void>(
       name: AppRoutes.timerPresets,
-      page: () => const _UpcomingRoutePlaceholder(
-        title: 'Timer Presets',
-        subtitle: 'Timer Preset Management will be implemented in Section 5.7.',
-      ),
+      page: () => const PresetsListView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<PresetsViewModel>(
+          () => PresetsViewModel(
+            presetRepository: Get.find<PresetRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.createPreset,
+      page: () => const PresetFormView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<PresetFormViewModel>(
+          () => PresetFormViewModel(
+            presetRepository: Get.find<PresetRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.editPreset,
+      page: () => const PresetFormView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<PresetFormViewModel>(
+          () => PresetFormViewModel(
+            presetRepository: Get.find<PresetRepository>(),
+          ),
+        );
+      }),
     ),
     GetPage<void>(
       name: AppRoutes.addSubject,
@@ -332,45 +372,86 @@ abstract final class AppPages {
     ),
     GetPage<void>(
       name: AppRoutes.settings,
-      page: () => _UpcomingRoutePlaceholder(
-        title: 'Settings',
-        subtitle: 'Full Settings & Backup will be implemented in Section 5.7.',
-        extraActionLabel: 'Open Component Library',
-        onExtraAction: () => Get.toNamed<void>(AppRoutes.components),
-      ),
+      page: () => const SettingsView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<SettingsViewModel>(
+          () => SettingsViewModel(
+            settingsRepository: Get.find<SettingsRepository>(),
+            goalStreakRepository: Get.find<GoalStreakRepository>(),
+            presetRepository: Get.find<PresetRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+            subjectRepository: Get.find<SubjectRepository>(),
+            timerEngine: Get.find<TimerEngineService>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.dailyGoalConfig,
+      page: () => const DailyGoalConfigView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<GoalConfigViewModel>(
+          () => GoalConfigViewModel(
+            goalStreakRepository: Get.find<GoalStreakRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.weeklyGoalConfig,
+      page: () => const WeeklyGoalConfigView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<GoalConfigViewModel>(
+          () => GoalConfigViewModel(
+            goalStreakRepository: Get.find<GoalStreakRepository>(),
+            sessionRepository: Get.find<SessionRepository>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.exportBackup,
+      page: () => const ExportBackupView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<BackupViewModel>(
+          () => BackupViewModel(
+            backupService: Get.find<BackupService>(),
+            timerEngine: Get.find<TimerEngineService>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.importBackup,
+      page: () => const ImportBackupView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<BackupViewModel>(
+          () => BackupViewModel(
+            backupService: Get.find<BackupService>(),
+            timerEngine: Get.find<TimerEngineService>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.studyReport,
+      page: () => const ExportReportView(),
+      binding: BindingsBuilder<void>(() {
+        Get.lazyPut<ExportReportViewModel>(
+          () => ExportReportViewModel(
+            reportService: Get.find<ReportService>(),
+          ),
+        );
+      }),
+    ),
+    GetPage<void>(
+      name: AppRoutes.privacyPolicy,
+      page: () => const PrivacyPolicyView(),
+    ),
+    GetPage<void>(
+      name: AppRoutes.navigationFlow,
+      page: () => const NavigationFlowView(),
     ),
   ];
-}
-
-class _UpcomingRoutePlaceholder extends StatelessWidget {
-  const _UpcomingRoutePlaceholder({
-    required this.title,
-    required this.subtitle,
-    this.extraActionLabel,
-    this.onExtraAction,
-  });
-
-  final String title;
-  final String subtitle;
-  final String? extraActionLabel;
-  final VoidCallback? onExtraAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PmAppBar(title: title),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
-        child: Center(
-          child: PmEmptyState(
-            icon: Icons.construction_outlined,
-            title: title,
-            subtitle: subtitle,
-            actionLabel: extraActionLabel,
-            onAction: onExtraAction,
-          ),
-        ),
-      ),
-    );
-  }
 }

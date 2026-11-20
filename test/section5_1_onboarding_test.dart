@@ -55,6 +55,7 @@ void main() {
 
       expect(find.text('ParhaiMate'), findsOneWidget);
       expect(find.text('Your Personal Study Companion'), findsOneWidget);
+      expect(find.text('Powered by Coding District'), findsOneWidget);
 
       // Advance past the 700ms splash delay and PageView settle.
       await tester.pump(const Duration(milliseconds: 900));
