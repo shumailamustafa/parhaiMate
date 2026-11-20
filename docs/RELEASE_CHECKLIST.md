@@ -35,7 +35,7 @@ Verify a bundle is signed with the upload key:
 
 ## 3. Play Console (first release)
 
-- [ ] Host `docs/PRIVACY_POLICY.md` publicly (GitHub Pages or Google Sites) and add the support email
+- [ ] Host the `legal-site/` folder on GitHub Pages (privacy policy, terms, support/data deletion)
 - [ ] App content → Privacy policy URL
 - [ ] App content → Data safety: **No data collected, no data shared**. Encryption in transit: not applicable (no network). Users can request deletion: yes (in-app delete)
 - [ ] App content → Ads: **No ads**
