@@ -41,7 +41,21 @@ class PrivacyPolicyView extends StatelessWidget {
             Text('Backups you control', style: AppTypography.body16SemiBold),
             SizedBox(height: 8),
             Text(
-              'JSON backups and CSV/PDF study reports are generated locally on your device and shared or stored strictly where you choose. Anyone with a backup file can read its contents.',
+              'JSON backups and CSV/PDF study reports are generated locally on your device and shared or stored strictly where you choose. Anyone with a backup file can read its contents. Before a backup replaces your data, ParhaiMate keeps a private safety copy on this device.',
+              style: AppTypography.secondary14,
+            ),
+            SizedBox(height: 24),
+            Text('Session alerts', style: AppTypography.body16SemiBold),
+            SizedBox(height: 8),
+            Text(
+              'If you allow alerts, ParhaiMate schedules local reminders on your device for when a focus phase, break, or session ends. They are created by the app itself; nothing is sent over the internet. You can turn them off in Settings.',
+              style: AppTypography.secondary14,
+            ),
+            SizedBox(height: 24),
+            Text('Contact', style: AppTypography.body16SemiBold),
+            SizedBox(height: 8),
+            Text(
+              'Developer: Moazzam Samoo\nSupport: moazzamsamoo819@gmail.com',
               style: AppTypography.secondary14,
             ),
           ],

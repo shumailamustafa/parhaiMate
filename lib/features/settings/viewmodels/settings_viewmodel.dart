@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/services/local_notification_service.dart';
 import '../../../core/services/timer_engine_service.dart';
 import '../../../domain/entities/domain_entities.dart';
 import '../../../domain/enums/domain_enums.dart';
@@ -17,12 +18,31 @@ class SettingsViewModel extends GetxController {
     required SessionRepository sessionRepository,
     required SubjectRepository subjectRepository,
     required TimerEngineService timerEngine,
+    LocalNotificationService? notificationService,
   })  : _settingsRepo = settingsRepository,
         _goalRepo = goalStreakRepository,
         _presetRepo = presetRepository,
         _sessionRepo = sessionRepository,
         _subjectRepo = subjectRepository,
-        _timerEngine = timerEngine;
+        _timerEngine = timerEngine,
+        _notificationService = notificationService;
+
+  final LocalNotificationService? _notificationService;
+  final RxBool sessionAlertsEnabled = true.obs;
+
+  Future<void> setSessionAlertsEnabled({required bool enabled}) async {
+    await _settingsRepo.setSessionAlertsEnabled(enabled: enabled);
+    _notificationService?.setEnabled(enabled: enabled);
+    if (enabled) {
+      await _notificationService?.requestPermission();
+      await _timerEngine.rescheduleAlerts();
+    } else {
+      await _notificationService?.cancelSessionAlerts();
+    }
+    if (!_disposed) {
+      sessionAlertsEnabled.value = enabled;
+    }
+  }
 
   final SettingsRepository _settingsRepo;
   final GoalStreakRepository _goalRepo;
@@ -63,10 +83,12 @@ class SettingsViewModel extends GetxController {
     final daily = await _goalRepo.getDailyGoalMinutes();
     final weekly = await _goalRepo.getWeeklyGoalMinutes();
     final mode = await _settingsRepo.getDefaultTimerMode();
+    final alerts = await _settingsRepo.areSessionAlertsEnabled();
     if (!_disposed) {
       dailyGoalMinutes.value = daily;
       weeklyGoalMinutes.value = weekly;
       defaultTimerMode.value = mode;
+      sessionAlertsEnabled.value = alerts;
     }
   }
 
@@ -83,6 +105,11 @@ class SettingsViewModel extends GetxController {
     }
     isProcessingData.value = true;
     try {
+      // Stop the live timer first; otherwise it keeps running in memory and
+      // later tries to complete a session row that no longer exists.
+      if (_timerEngine.hasActiveSession) {
+        await _timerEngine.cancelSession();
+      }
       await _sessionRepo.clearHistory();
     } finally {
       if (!_disposed) {

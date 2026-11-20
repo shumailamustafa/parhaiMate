@@ -107,5 +107,9 @@ abstract interface class SettingsRepository {
   Future<void> setOnboardingCompleted({required bool completed});
   Future<TimerMode> getDefaultTimerMode();
   Future<void> setDefaultTimerMode(TimerMode mode);
+  Future<bool> areSessionAlertsEnabled();
+  Future<void> setSessionAlertsEnabled({required bool enabled});
+  Future<bool> wasNotificationPromptShown();
+  Future<void> markNotificationPromptShown();
   Future<void> resetAllAppData();
 }

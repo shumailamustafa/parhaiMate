@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,6 +15,27 @@ import '../widgets/timer_pickers.dart';
 /// Session Setup screen matching 05 Session Setup.png and mode variants.
 class SessionSetupView extends GetView<SessionSetupViewModel> {
   const SessionSetupView({super.key});
+
+  /// Explains session alerts once, before Android's permission prompt.
+  Future<void> _onStartPressed(BuildContext context) async {
+    if (await controller.shouldExplainNotifications() && context.mounted) {
+      final allow = await showDialog<bool>(
+        context: context,
+        barrierColor: AppColors.barrierScrim,
+        builder: (dialogContext) => PmConfirmationDialog(
+          icon: Icons.notifications_none_rounded,
+          title: 'Get session alerts?',
+          message:
+              'ParhaiMate can tell you when a focus phase, break, or session ends, even if your phone is locked. Alerts are created on your device only. You can turn them off anytime in Settings.',
+          confirmLabel: 'Allow Alerts',
+          cancelLabel: 'Not Now',
+          onConfirm: () => Navigator.of(dialogContext).pop(true),
+        ),
+      );
+      await controller.respondToNotificationExplanation(allow: allow ?? false);
+    }
+    await controller.startSession();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +250,7 @@ class SessionSetupView extends GetView<SessionSetupViewModel> {
                 child: PmPrimaryButton(
                   label: 'Start Session',
                   isLoading: controller.isStarting.value,
-                  onPressed: controller.startSession,
+                  onPressed: () => unawaited(_onStartPressed(context)),
                 ),
               ),
             ),

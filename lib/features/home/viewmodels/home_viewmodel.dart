@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -9,7 +10,7 @@ import '../../../core/widgets/pm_inputs.dart';
 import '../../../domain/entities/domain_entities.dart';
 import '../../../domain/repositories/repositories.dart';
 
-class HomeViewModel extends GetxController {
+class HomeViewModel extends GetxController with WidgetsBindingObserver {
   HomeViewModel({
     required SubjectRepository subjectRepository,
     required SessionRepository sessionRepository,
@@ -44,7 +45,9 @@ class HomeViewModel extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     selectedDate.value = DateTimeUtils.startOfDay(_nowProvider());
+    _todayKey = DateTimeUtils.toDateKey(_nowProvider());
     _subjectsSub = _subjectRepository.watchSubjects().listen((data) {
       subjects.assignAll(data);
       isLoading.value = false;
@@ -61,6 +64,31 @@ class HomeViewModel extends GetxController {
       streakSummary.value = data;
     });
     unawaited(refreshGoals());
+  }
+
+  String _todayKey = '';
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      onDayMaybeChanged();
+    }
+  }
+
+  /// If the app was left open past midnight, move "today" forward — but only
+  /// when the user was looking at today, not at a date they picked.
+  void onDayMaybeChanged() {
+    final nowKey = DateTimeUtils.toDateKey(_nowProvider());
+    if (nowKey == _todayKey) {
+      return;
+    }
+    final wasViewingToday = selectedDateKey == _todayKey;
+    _todayKey = nowKey;
+    if (wasViewingToday) {
+      selectDate(_nowProvider());
+    } else {
+      selectedDate.refresh();
+    }
   }
 
   Future<void> refreshGoals() async {
@@ -222,6 +250,7 @@ class HomeViewModel extends GetxController {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     unawaited(_subjectsSub?.cancel());
     unawaited(_sessionsSub?.cancel());
     unawaited(_tasksSub?.cancel());

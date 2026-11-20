@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../core/services/local_notification_service.dart';
 import '../../core/services/timer_engine_service.dart';
 import '../../data/database/app_database.dart';
 import '../../data/repositories/drift_repositories.dart';
@@ -10,9 +11,17 @@ import '../lifecycle/app_lifecycle_handler.dart';
 
 /// Registers long-lived core singletons (database, repositories, timer engine).
 class InitialBinding extends Bindings {
-  InitialBinding({AppDatabase? database}) : _databaseOverride = database;
+  InitialBinding({
+    AppDatabase? database,
+    LocalNotificationService? notificationService,
+  })  : _databaseOverride = database,
+        _notificationService = notificationService;
 
   final AppDatabase? _databaseOverride;
+
+  /// Initialized in `main()`. When omitted (tests) an uninitialized
+  /// instance is used, which makes every alert call a no-op.
+  final LocalNotificationService? _notificationService;
 
   @override
   void dependencies() {
@@ -35,9 +44,13 @@ class InitialBinding extends Bindings {
     Get.put<PresetRepository>(presetRepo, permanent: true);
     Get.put<SettingsRepository>(settingsRepo, permanent: true);
 
+    final notifications = _notificationService ?? LocalNotificationService();
+    Get.put<LocalNotificationService>(notifications, permanent: true);
+
     final timerEngine = TimerEngineService(
       sessionRepository: sessionRepo,
       activeTimerDao: db.activeTimerDao,
+      notifier: notifications,
     );
     Get.put<TimerEngineService>(timerEngine, permanent: true);
 

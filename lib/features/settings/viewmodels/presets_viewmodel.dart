@@ -163,7 +163,11 @@ class PresetFormViewModel extends GetxController {
         final breaks = cyclesBeforeLongBreak.value > 1
             ? (cyclesBeforeLongBreak.value - 1) * shortBreakMinutes.value
             : 0;
-        return (cyclesBeforeLongBreak.value * focusMinutes.value) + breaks;
+        // Same rule as the timer engine: short breaks between cycles,
+        // then one long break that closes the set.
+        return (cyclesBeforeLongBreak.value * focusMinutes.value) +
+            breaks +
+            longBreakMinutes.value;
     }
   }
 

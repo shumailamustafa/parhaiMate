@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../../shared/widgets/widgets.dart';
 import '../viewmodels/splash_viewmodel.dart';
 import '../widgets/parhaimate_logo.dart';
@@ -44,6 +47,26 @@ class SplashView extends GetView<SplashViewModel> {
             ),
             const Spacer(),
             Obx(() {
+              final error = controller.errorMessage.value;
+              if (error != null) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: <Widget>[
+                      Text(
+                        error,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.secondary14,
+                      ),
+                      const SizedBox(height: 12),
+                      PmPrimaryButton(
+                        label: 'Try Again',
+                        onPressed: () => unawaited(controller.retry()),
+                      ),
+                    ],
+                  ),
+                );
+              }
               final active = controller.activeDot.value;
               return Row(
                 mainAxisAlignment: MainAxisAlignment.center,

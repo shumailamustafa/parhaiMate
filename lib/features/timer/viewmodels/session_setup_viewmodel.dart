@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/services/local_notification_service.dart';
 import '../../../core/services/timer_engine_service.dart';
 import '../../../core/utils/date_time_utils.dart';
 import '../../../domain/entities/domain_entities.dart';
@@ -17,13 +18,37 @@ class SessionSetupViewModel extends GetxController {
     required SubjectRepository subjectRepository,
     required SettingsRepository settingsRepository,
     required TimerEngineService timerEngine,
+    LocalNotificationService? notificationService,
     DateTime Function()? nowProvider,
     dynamic initialArgs,
   })  : _subjectRepository = subjectRepository,
         _settingsRepository = settingsRepository,
         _timerEngine = timerEngine,
+        _notificationService = notificationService,
         _nowProvider = nowProvider ?? DateTime.now,
         _initialArgs = initialArgs;
+
+  final LocalNotificationService? _notificationService;
+
+  /// True once per install, before the first session, when Android has not
+  /// yet granted notifications. The View then explains why before asking.
+  Future<bool> shouldExplainNotifications() async {
+    final service = _notificationService;
+    if (service == null || !service.isInitialized || !service.isEnabled) {
+      return false;
+    }
+    if (await _settingsRepository.wasNotificationPromptShown()) {
+      return false;
+    }
+    return !(await service.areNotificationsAllowed());
+  }
+
+  Future<void> respondToNotificationExplanation({required bool allow}) async {
+    await _settingsRepository.markNotificationPromptShown();
+    if (allow) {
+      await _notificationService?.requestPermission();
+    }
+  }
 
   static const List<int> durationChoices = <int>[15, 25, 30, 45, 60];
 
@@ -165,8 +190,10 @@ class SessionSetupViewModel extends GetxController {
       case TimerMode.stopwatch:
         return 0;
       case TimerMode.pomodoro:
+        // N focus cycles, a short break between them, then one long break.
         return (totalCycles.value * focusMinutes.value) +
-            (math.max(0, totalCycles.value - 1) * shortBreakMinutes.value);
+            (math.max(0, totalCycles.value - 1) * shortBreakMinutes.value) +
+            longBreakMinutes.value;
     }
   }
 

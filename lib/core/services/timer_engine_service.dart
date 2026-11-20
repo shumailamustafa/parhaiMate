@@ -10,23 +10,35 @@ import '../../data/models/data_mappers.dart';
 import '../../domain/entities/domain_entities.dart';
 import '../../domain/enums/domain_enums.dart';
 import '../../domain/repositories/repositories.dart';
+import 'session_notifier.dart';
 
 /// Reliable timestamp-backed timer engine supporting Focus, Stopwatch, and Pomodoro.
 ///
 /// Never relies on decrementing an in-memory integer as truth. All remaining/elapsed
 /// calculations derive from persisted UTC timestamps in [ActiveTimerDao].
+///
+/// Pomodoro rule: a session is one set of `totalCycles` focus phases with a
+/// short break between them, followed by one long break. The session is
+/// completed when that long break ends (or earlier via [finishEarly]).
+/// Only focus time ever counts toward the saved duration.
 class TimerEngineService extends GetxService {
   TimerEngineService({
     required SessionRepository sessionRepository,
     required ActiveTimerDao activeTimerDao,
     int Function()? nowMsProvider,
+    SessionNotifier notifier = const NoopSessionNotifier(),
   })  : _sessionRepository = sessionRepository,
         _activeTimerDao = activeTimerDao,
+        _notifier = notifier,
         _nowMsProvider =
             nowMsProvider ?? (() => DateTime.now().toUtc().millisecondsSinceEpoch);
 
+  /// A forgotten stopwatch is auto-saved at this length instead of growing forever.
+  static const int maxStopwatchSeconds = 12 * 60 * 60;
+
   final SessionRepository _sessionRepository;
   final ActiveTimerDao _activeTimerDao;
+  final SessionNotifier _notifier;
   final int Function() _nowMsProvider;
 
   final Rxn<ActiveTimerEntity> activeState = Rxn<ActiveTimerEntity>();
@@ -54,6 +66,8 @@ class TimerEngineService extends GetxService {
     await reconcile();
     if (hasActiveSession && isRunning) {
       _startUiTicker();
+      // Alarms are lost after a force-stop; re-arm them on every launch.
+      await _scheduleAlerts(activeState.value!);
     }
   }
 
@@ -115,6 +129,7 @@ class TimerEngineService extends GetxService {
     activeState.value = entity;
     _updateComputedReadouts(entity, nowMs);
     _startUiTicker();
+    await _scheduleAlerts(entity);
     return entity;
   }
 
@@ -163,6 +178,7 @@ class TimerEngineService extends GetxService {
       updatedAtMs: nowMs,
     );
     _stopUiTicker();
+    await _notifier.cancelSessionAlerts();
   }
 
   /// Resumes a paused timer from persisted state using fresh UTC timestamps.
@@ -200,6 +216,7 @@ class TimerEngineService extends GetxService {
       updatedAtMs: nowMs,
     );
     _startUiTicker();
+    await _scheduleAlerts(activeState.value!);
   }
 
   /// Recomputes live display values and catches up any expired countdown phases.
@@ -221,6 +238,21 @@ class TimerEngineService extends GetxService {
       }
 
       final nowMs = overrideNowMs ?? _nowMsProvider();
+
+      if (current.timerMode == TimerMode.stopwatch &&
+          !current.isPaused &&
+          _computeElapsedFocusSeconds(current, nowMs) >= maxStopwatchSeconds) {
+        final remainingToCap =
+            maxStopwatchSeconds - current.accumulatedSeconds;
+        final capEndMs = (current.segmentStartedAtMs ?? nowMs) +
+            (math.max(0, remainingToCap) * 1000);
+        await _completeActiveSession(
+          current,
+          endedAtMs: math.min(capEndMs, nowMs),
+          durationSeconds: maxStopwatchSeconds,
+        );
+        return;
+      }
 
       if (current.isPaused || current.timerMode == TimerMode.stopwatch) {
         _updateComputedReadouts(current, nowMs);
@@ -246,6 +278,18 @@ class TimerEngineService extends GetxService {
         }
 
         // Pomodoro phase transition
+        if (current.phase == TimerPhase.longBreak) {
+          // Long break ends the Pomodoro set: save focus time exactly once.
+          await _completeActiveSession(
+            current,
+            endedAtMs: phaseEndMs,
+            durationSeconds: current.accumulatedSeconds > 0
+                ? current.accumulatedSeconds
+                : current.plannedDurationSeconds,
+          );
+          return;
+        }
+
         if (current.phase == TimerPhase.focusing) {
           final segmentStart = current.segmentStartedAtMs ?? phaseEndMs;
           final gained = math.max(0, (phaseEndMs - segmentStart) ~/ 1000);
@@ -254,19 +298,10 @@ class TimerEngineService extends GetxService {
             current.accumulatedSeconds + gained,
           );
 
-          if (current.currentCycle >= current.totalCycles) {
-            await _completeActiveSession(
-              current,
-              endedAtMs: phaseEndMs,
-              durationSeconds: nextAccumulated > 0
-                  ? nextAccumulated
-                  : current.plannedDurationSeconds,
-            );
-            return;
-          }
-
-          const nextPhase = TimerPhase.shortBreak;
-          final breakSec = current.shortBreakMinutes * 60;
+          final isLastCycle = current.currentCycle >= current.totalCycles;
+          final nextPhase =
+              isLastCycle ? TimerPhase.longBreak : TimerPhase.shortBreak;
+          final breakSec = _phaseDurationSeconds(current, nextPhase);
           current = ActiveTimerEntity(
             sessionId: current.sessionId,
             subjectId: current.subjectId,
@@ -288,7 +323,7 @@ class TimerEngineService extends GetxService {
           );
           stateChanged = true;
         } else {
-          // Break finished -> move to next cycle focusing
+          // Short break finished -> move to next cycle focusing
           final nextCycle = current.currentCycle + 1;
           final focusSec = current.focusMinutes * 60;
           current = ActiveTimerEntity(
@@ -345,6 +380,7 @@ class TimerEngineService extends GetxService {
   Future<void> cancelSession() async {
     final current = activeState.value;
     _stopUiTicker();
+    await _notifier.cancelSessionAlerts();
     if (current?.sessionId != null) {
       await _sessionRepository.cancelSession(
         sessionId: current!.sessionId!,
@@ -363,6 +399,7 @@ class TimerEngineService extends GetxService {
     String? notes,
   }) async {
     _stopUiTicker();
+    await _notifier.cancelSessionAlerts();
     final session = await _sessionRepository.completeSession(
       sessionId: current.sessionId!,
       endedAtMs: endedAtMs,
@@ -431,6 +468,102 @@ class TimerEngineService extends GetxService {
         updatedAt: drift.Value<int>(entity.updatedAtMs),
       ),
     );
+  }
+
+  /// Re-arms alerts for the running session (e.g. after alerts are re-enabled).
+  Future<void> rescheduleAlerts() async {
+    final current = activeState.value;
+    if (current != null && !current.isPaused) {
+      await _scheduleAlerts(current);
+    }
+  }
+
+  Future<void> _scheduleAlerts(ActiveTimerEntity entity) async {
+    try {
+      await _notifier.scheduleSessionAlerts(buildAlertTimeline(entity));
+    } catch (_) {
+      // Alerts are best-effort; the timestamp-based timer stays correct.
+    }
+  }
+
+  /// Every upcoming phase-end alert for a running [entity], derived purely
+  /// from persisted timestamps (so it can be rebuilt after process death).
+  List<ScheduledAlert> buildAlertTimeline(ActiveTimerEntity entity) {
+    if (entity.isPaused) {
+      return const <ScheduledAlert>[];
+    }
+
+    if (entity.timerMode == TimerMode.stopwatch) {
+      final start = entity.segmentStartedAtMs;
+      if (start == null) {
+        return const <ScheduledAlert>[];
+      }
+      final remaining = maxStopwatchSeconds - entity.accumulatedSeconds;
+      return <ScheduledAlert>[
+        ScheduledAlert(
+          atMs: start + (math.max(0, remaining) * 1000),
+          title: 'Stopwatch saved',
+          body: 'Your stopwatch reached 12 hours, so the session was saved.',
+        ),
+      ];
+    }
+
+    final firstEndMs = entity.targetEndAtMs;
+    if (firstEndMs == null) {
+      return const <ScheduledAlert>[];
+    }
+    var endMs = firstEndMs;
+
+    if (entity.timerMode == TimerMode.focus) {
+      return <ScheduledAlert>[
+        ScheduledAlert(
+          atMs: endMs,
+          title: 'Focus session complete',
+          body: 'Great work! Open ParhaiMate to see your session summary.',
+        ),
+      ];
+    }
+
+    final alerts = <ScheduledAlert>[];
+    var phase = entity.phase;
+    var cycle = entity.currentCycle;
+    while (true) {
+      switch (phase) {
+        case TimerPhase.focusing:
+          final isLast = cycle >= entity.totalCycles;
+          alerts.add(
+            ScheduledAlert(
+              atMs: endMs,
+              title: isLast ? 'Pomodoro set done' : 'Focus cycle $cycle done',
+              body: isLast
+                  ? 'Enjoy a ${entity.longBreakMinutes} min long break.'
+                  : 'Take a ${entity.shortBreakMinutes} min break.',
+            ),
+          );
+          phase = isLast ? TimerPhase.longBreak : TimerPhase.shortBreak;
+          endMs = endMs + (_phaseDurationSeconds(entity, phase) * 1000);
+        case TimerPhase.shortBreak:
+          cycle += 1;
+          alerts.add(
+            ScheduledAlert(
+              atMs: endMs,
+              title: 'Break over',
+              body: 'Cycle $cycle of ${entity.totalCycles} is starting. Back to focus!',
+            ),
+          );
+          phase = TimerPhase.focusing;
+          endMs = endMs + (entity.focusMinutes * 60 * 1000);
+        case TimerPhase.longBreak:
+          alerts.add(
+            ScheduledAlert(
+              atMs: endMs,
+              title: 'Study session complete',
+              body: 'Open ParhaiMate to see your session summary.',
+            ),
+          );
+          return alerts;
+      }
+    }
   }
 
   int _phaseDurationSeconds(ActiveTimerEntity entity, TimerPhase phase) {

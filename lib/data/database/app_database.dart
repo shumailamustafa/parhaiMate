@@ -51,6 +51,8 @@ class AppDatabase extends _$AppDatabase {
   static const String keyWeeklyGoalMinutes = 'weekly_goal_minutes';
   static const String keyDefaultTimerMode = 'default_timer_mode';
   static const String keyOnboardingCompleted = 'onboarding_completed';
+  static const String keySessionAlertsEnabled = 'session_alerts_enabled';
+  static const String keyNotificationPromptShown = 'notification_prompt_shown';
 
   static const List<String> defaultAchievementCodes = <String>[
     'first_session',

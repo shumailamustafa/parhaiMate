@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+. See backup_rules.xml for why the "root" domain is used. -->
 <data-extraction-rules>
     <cloud-backup>
-        <include domain="database" path="." />
+        <include domain="root" path="app_flutter/parhaimate.sqlite" />
         <include domain="sharedpref" path="." />
-        <exclude domain="cache" path="." />
-        <exclude domain="external" path="." />
     </cloud-backup>
     <device-transfer>
-        <include domain="database" path="." />
+        <include domain="root" path="app_flutter/parhaimate.sqlite" />
         <include domain="sharedpref" path="." />
-        <exclude domain="cache" path="." />
-        <exclude domain="external" path="." />
     </device-transfer>
 </data-extraction-rules>

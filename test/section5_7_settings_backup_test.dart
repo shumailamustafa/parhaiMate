@@ -116,7 +116,7 @@ void main() {
 
   group('Section 5.7 Settings, Goals, Presets, Backup & Reporting', () {
     testWidgets(
-      'Settings omits Notification Preferences, updates Default Timer Mode dynamically, clears history cleanly, and gates Delete All App Data behind DELETE',
+      'Settings shows Session Alerts toggle, updates Default Timer Mode dynamically, clears history cleanly, and gates Delete All App Data behind DELETE',
       (tester) async {
         final binding = InitialBinding(database: db);
         binding.dependencies();
@@ -152,6 +152,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Settings'), findsOneWidget);
+        expect(find.text('Session Alerts'), findsOneWidget);
         expect(find.text('Notification Preferences'), findsNothing);
         expect(find.text('Component Library'), findsNothing);
         expect(find.text('Navigation Flow'), findsNothing);
@@ -333,8 +334,8 @@ void main() {
         await tester.pump();
         expect(find.text('Enter a preset name'), findsNothing);
 
-        // Pomodoro default: 4*25 + 3*5 = 115m -> 1h 55m.
-        expect(find.text('1h 55m'), findsOneWidget);
+        // Pomodoro default: 4*25 + 3*5 + 15 long break = 130m -> 2h 10m.
+        expect(find.text('2h 10m'), findsOneWidget);
         expect(find.text('Short break'), findsOneWidget);
 
         // Switch to Focus Timer -> hides break steppers & updates Full session duration.
@@ -535,6 +536,12 @@ void main() {
         final replacedSubjects =
             await Get.find<SubjectRepository>().getSubjects();
         expect(replacedSubjects.map((s) => s.name).toList(), <String>['Algorithms']);
+
+        // Replace wrote a safety copy of the pre-restore data first.
+        final snapshotPath = backupService.lastSafetySnapshotPath;
+        expect(snapshotPath, isNotNull);
+        final snapshot = File(snapshotPath!).readAsStringSync();
+        expect(snapshot, contains('Chemistry'));
 
         await _disposeWidgetTree(tester);
       },

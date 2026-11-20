@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and lower. path_provider's documents directory is
+     getDir("flutter") = <data dir>/app_flutter/, which Drift uses for
+     parhaimate.sqlite. That is the "root" domain, not "database".
+     Only the study database and preferences are backed up; export copies,
+     safety snapshots and caches are left out. -->
 <full-backup-content>
-    <include domain="database" path="." />
+    <include domain="root" path="app_flutter/parhaimate.sqlite" />
     <include domain="sharedpref" path="." />
-    <exclude domain="cache" path="." />
-    <exclude domain="external" path="." />
 </full-backup-content>

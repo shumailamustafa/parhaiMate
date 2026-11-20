@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/constants/app_info.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radii.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -97,6 +100,23 @@ class SettingsView extends GetView<SettingsViewModel> {
                       ),
                       onTap: () => Get.toNamed<void>(AppRoutes.timerPresets),
                     ),
+                    const Divider(height: 1, color: AppColors.divider),
+                    PmListTileRow(
+                      title: 'Session Alerts',
+                      subtitle: 'Alert when a focus phase, break, or session ends',
+                      showChevron: false,
+                      leading: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 20,
+                        color: AppColors.textPrimary,
+                      ),
+                      trailing: PmSwitch(
+                        value: controller.sessionAlertsEnabled.value,
+                        onChanged: (value) => unawaited(
+                          controller.setSessionAlertsEnabled(enabled: value),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -169,11 +189,11 @@ class SettingsView extends GetView<SettingsViewModel> {
                       onTap: () => Get.toNamed<void>(AppRoutes.privacyPolicy),
                     ),
                     const Divider(height: 1, color: AppColors.divider),
-                    const PmListTileRow(
+                    PmListTileRow(
                       title: 'App Version',
-                      trailingValue: '1.0.0',
+                      trailingValue: AppInfo.version,
                       showChevron: false,
-                      leading: Icon(
+                      leading: const Icon(
                         Icons.info_outline_rounded,
                         size: 20,
                         color: AppColors.textPrimary,
@@ -283,23 +303,23 @@ class SettingsView extends GetView<SettingsViewModel> {
     return PmBottomSheet.show<void>(
       context: context,
       title: 'About ParhaiMate',
-      child: const Column(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          SizedBox(height: 8),
-          ParhaiMateLogo(size: 76),
-          SizedBox(height: 16),
-          Text('ParhaiMate', style: AppTypography.title24),
-          SizedBox(height: 4),
-          Text(
+          const SizedBox(height: 8),
+          const ParhaiMateLogo(size: 76),
+          const SizedBox(height: 16),
+          const Text('ParhaiMate', style: AppTypography.title24),
+          const SizedBox(height: 4),
+          const Text(
             'Your Personal Study Companion',
             style: AppTypography.secondary14,
           ),
-          SizedBox(height: 6),
-          Text('Version 1.0.0', style: AppTypography.meta12),
-          SizedBox(height: 20),
-          PoweredByCodingDistrict(),
-          SizedBox(height: 8),
+          const SizedBox(height: 6),
+          Text('Version ${AppInfo.version}', style: AppTypography.meta12),
+          const SizedBox(height: 20),
+          const PoweredByCodingDistrict(),
+          const SizedBox(height: 8),
         ],
       ),
     );

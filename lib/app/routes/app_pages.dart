@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/services/local_notification_service.dart';
 import '../../core/services/timer_engine_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/widgets.dart';
@@ -68,6 +70,10 @@ abstract final class AppPages {
           () => SplashViewModel(
             settingsRepository: Get.find<SettingsRepository>(),
             timerEngine: Get.find<TimerEngineService>(),
+            notificationService:
+                Get.isRegistered<LocalNotificationService>()
+                    ? Get.find<LocalNotificationService>()
+                    : null,
           ),
         );
       }),
@@ -196,10 +202,12 @@ abstract final class AppPages {
         );
       }),
     ),
-    GetPage<void>(
-      name: AppRoutes.components,
-      page: () => const ComponentLibraryView(),
-    ),
+    // Developer-only screens are not registered in release builds.
+    if (kDebugMode)
+      GetPage<void>(
+        name: AppRoutes.components,
+        page: () => const ComponentLibraryView(),
+      ),
     GetPage<void>(
       name: AppRoutes.sessionSetup,
       page: () => const SessionSetupView(),
@@ -209,6 +217,10 @@ abstract final class AppPages {
             subjectRepository: Get.find<SubjectRepository>(),
             settingsRepository: Get.find<SettingsRepository>(),
             timerEngine: Get.find<TimerEngineService>(),
+            notificationService:
+                Get.isRegistered<LocalNotificationService>()
+                    ? Get.find<LocalNotificationService>()
+                    : null,
           ),
         );
       }),
@@ -382,6 +394,10 @@ abstract final class AppPages {
             sessionRepository: Get.find<SessionRepository>(),
             subjectRepository: Get.find<SubjectRepository>(),
             timerEngine: Get.find<TimerEngineService>(),
+            notificationService:
+                Get.isRegistered<LocalNotificationService>()
+                    ? Get.find<LocalNotificationService>()
+                    : null,
           ),
         );
       }),
@@ -449,9 +465,10 @@ abstract final class AppPages {
       name: AppRoutes.privacyPolicy,
       page: () => const PrivacyPolicyView(),
     ),
-    GetPage<void>(
-      name: AppRoutes.navigationFlow,
-      page: () => const NavigationFlowView(),
-    ),
+    if (kDebugMode)
+      GetPage<void>(
+        name: AppRoutes.navigationFlow,
+        page: () => const NavigationFlowView(),
+      ),
   ];
 }

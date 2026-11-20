@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -115,6 +116,33 @@ class ReportService {
     );
   }
 
+  pw.ThemeData? _pdfTheme;
+
+  /// Embeds Noto Sans (Latin + symbols) with Noto Naskh Arabic as a fallback
+  /// so subject names and notes in Urdu or with special characters render
+  /// instead of the built-in Helvetica's missing glyphs.
+  Future<pw.ThemeData?> _loadPdfTheme() async {
+    if (_pdfTheme != null) {
+      return _pdfTheme;
+    }
+    try {
+      Future<pw.Font> load(String name) async =>
+          pw.Font.ttf(await rootBundle.load('assets/fonts/$name'));
+      _pdfTheme = pw.ThemeData.withFont(
+        base: await load('NotoSans-Regular.ttf'),
+        bold: await load('NotoSans-Bold.ttf'),
+        fontFallback: <pw.Font>[
+          await load('NotoNaskhArabic-Regular.ttf'),
+          await load('NotoNaskhArabic-Bold.ttf'),
+        ],
+      );
+      return _pdfTheme;
+    } catch (_) {
+      // Fall back to the default font rather than failing the export.
+      return null;
+    }
+  }
+
   String buildCsvContent(ReportPreviewData data) {
     final rows = <List<dynamic>>[
       <String>[
@@ -156,7 +184,7 @@ class ReportService {
     ReportPeriod period,
     ReportPreviewData data,
   ) async {
-    final doc = pw.Document();
+    final doc = pw.Document(theme: await _loadPdfTheme());
     const navy = PdfColor.fromInt(0xFF123B52);
     const lightGrey = PdfColor.fromInt(0xFFF0F0F0);
     const darkGrey = PdfColor.fromInt(0xFF5C5C5C);

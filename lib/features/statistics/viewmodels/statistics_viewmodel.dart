@@ -127,7 +127,18 @@ class StatisticsViewModel extends GetxController {
     }
   }
 
+  /// Current period plus the matching span of the previous one, so "this
+  /// month so far" is compared with the same number of days last month,
+  /// not with the whole of last month.
   (int startMs, int endMs, int prevStartMs, int prevEndMs) _periodBounds() {
+    final (startMs, endMs, prevStartMs, prevFullEndMs) = _fullPeriodBounds();
+    final elapsedMs = now.toUtc().millisecondsSinceEpoch - startMs;
+    final prevToDateEndMs =
+        math.min<int>(prevStartMs + math.max<int>(0, elapsedMs), prevFullEndMs);
+    return (startMs, endMs, prevStartMs, prevToDateEndMs);
+  }
+
+  (int startMs, int endMs, int prevStartMs, int prevEndMs) _fullPeriodBounds() {
     final current = now;
     switch (selectedPeriod.value) {
       case StatsPeriod.week:
@@ -189,9 +200,9 @@ class StatisticsViewModel extends GetxController {
   String get comparisonLabel {
     final diff = (totalMinutes - previousPeriodMinutes).abs();
     final noun = switch (selectedPeriod.value) {
-      StatsPeriod.week => 'last week',
-      StatsPeriod.month => 'last month',
-      StatsPeriod.year => 'last year',
+      StatsPeriod.week => 'this time last week',
+      StatsPeriod.month => 'this time last month',
+      StatsPeriod.year => 'this time last year',
     };
     final verb = isComparisonGain ? 'more' : 'less';
     return '${DateTimeUtils.formatMinutes(diff)} $verb than $noun';

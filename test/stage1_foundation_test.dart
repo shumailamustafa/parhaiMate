@@ -13,7 +13,7 @@ import 'package:parhaimate/data/database/app_database.dart';
 
 void main() {
   group('Stage 1 Foundation Verification', () {
-    test('pubspec.yaml contains required dependencies and excludes notifications', () {
+    test('pubspec.yaml contains required dependencies and only local notifications', () {
       final pubspec = File('pubspec.yaml').readAsStringSync();
       for (final pkg in <String>[
         'get:',
@@ -30,12 +30,16 @@ void main() {
         'share_plus:',
         'drift_dev:',
         'build_runner:',
+        // Plan section 6: local session alerts scheduled at absolute times.
+        'flutter_local_notifications:',
+        'timezone:',
       ]) {
         expect(pubspec, contains(pkg));
       }
 
-      expect(pubspec, isNot(contains('flutter_local_notifications')));
-      expect(pubspec, isNot(contains('timezone')));
+      // No remote push, analytics, ads, or runtime font downloads.
+      expect(pubspec, isNot(contains('firebase')));
+      expect(pubspec, isNot(contains('google_mobile_ads')));
       expect(pubspec, isNot(contains('google_fonts')));
     });
 
@@ -46,7 +50,12 @@ void main() {
       expect(manifest, contains('android:allowBackup="true"'));
       expect(manifest, contains('@xml/backup_rules'));
       expect(manifest, contains('@xml/data_extraction_rules'));
-      expect(manifest, isNot(contains('POST_NOTIFICATIONS')));
+      // Session alerts use inexact alarms only: no exact-alarm,
+      // full-screen-intent, or foreground-service permission.
+      expect(manifest, isNot(contains('SCHEDULE_EXACT_ALARM')));
+      expect(manifest, isNot(contains('USE_EXACT_ALARM')));
+      expect(manifest, isNot(contains('USE_FULL_SCREEN_INTENT')));
+      expect(manifest, isNot(contains('FOREGROUND_SERVICE')));
       expect(manifest, isNot(contains('ACCESS_FINE_LOCATION')));
       expect(manifest, isNot(contains('READ_CONTACTS')));
       expect(manifest, isNot(contains('CAMERA')));

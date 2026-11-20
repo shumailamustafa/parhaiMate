@@ -34,6 +34,35 @@ class DriftSettingsRepository implements SettingsRepository {
   }
 
   @override
+  Future<bool> areSessionAlertsEnabled() async {
+    final raw =
+        await _db.settingsDao.getValue(AppDatabase.keySessionAlertsEnabled);
+    // Enabled unless the user explicitly turned alerts off.
+    return raw != 'false';
+  }
+
+  @override
+  Future<void> setSessionAlertsEnabled({required bool enabled}) {
+    return _db.settingsDao.setValue(
+      AppDatabase.keySessionAlertsEnabled,
+      enabled ? 'true' : 'false',
+    );
+  }
+
+  @override
+  Future<bool> wasNotificationPromptShown() async {
+    final raw =
+        await _db.settingsDao.getValue(AppDatabase.keyNotificationPromptShown);
+    return raw == 'true';
+  }
+
+  @override
+  Future<void> markNotificationPromptShown() {
+    return _db.settingsDao
+        .setValue(AppDatabase.keyNotificationPromptShown, 'true');
+  }
+
+  @override
   Future<void> resetAllAppData() {
     return _db.resetAllUserData();
   }

@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../core/constants/app_info.dart';
 import '../../../core/utils/date_time_utils.dart';
 import '../../../data/database/app_database.dart';
 import '../../../domain/enums/domain_enums.dart';
@@ -93,6 +94,16 @@ class BackupParseResult {
   bool get isSuccess => document != null;
 }
 
+/// Raised when the pre-restore safety copy cannot be written.
+class BackupSnapshotException implements Exception {
+  const BackupSnapshotException(this.details);
+
+  final String details;
+
+  @override
+  String toString() => 'BackupSnapshotException: $details';
+}
+
 class ExportedBackupFile {
   const ExportedBackupFile({
     required this.fileName,
@@ -120,7 +131,9 @@ class BackupService {
     Future<({String name, String content})?> Function()? pickBackupFileHandler,
     Future<String?> Function(String fileName, Uint8List bytes)?
         saveBackupFileHandler,
-  })  : _db = database,
+    Future<Directory> Function()? snapshotDirectoryProvider,
+  })  : _snapshotDirectoryProvider = snapshotDirectoryProvider,
+        _db = database,
         _goalRepo = goalStreakRepository,
         _settingsRepo = settingsRepository,
         _achievementRepo = achievementRepository,
@@ -131,6 +144,14 @@ class BackupService {
         _saveBackupFileHandler = saveBackupFileHandler;
 
   static const int currentSchemaVersion = 1;
+
+  /// How many automatic pre-restore safety copies are kept on the device.
+  static const int maxSafetySnapshots = 3;
+
+  final Future<Directory> Function()? _snapshotDirectoryProvider;
+
+  /// Path of the safety copy written before the most recent Replace restore.
+  String? lastSafetySnapshotPath;
 
   final AppDatabase _db;
   final GoalStreakRepository _goalRepo;
@@ -180,7 +201,7 @@ class BackupService {
     final payload = <String, dynamic>{
       'schemaVersion': currentSchemaVersion,
       'appName': 'ParhaiMate',
-      'appVersion': '1.0.0',
+      'appVersion': AppInfo.version,
       'exportedAtUtc': _nowProvider().toUtc().toIso8601String(),
       'settings': <String, dynamic>{
         'dailyGoalMinutes': dailyGoal,
@@ -574,10 +595,59 @@ class BackupService {
     return result;
   }
 
+  /// Writes the current data to a private safety copy before it is replaced.
+  ///
+  /// Throws [BackupSnapshotException] if the copy cannot be written, so a
+  /// Replace restore never runs without a way back.
+  Future<String> createSafetySnapshot() async {
+    try {
+      final Directory dir;
+      final custom = _snapshotDirectoryProvider;
+      final exportDir = _exportDirectoryProvider;
+      if (custom != null) {
+        dir = await custom();
+      } else if (exportDir != null) {
+        dir = Directory(p.join((await exportDir()).path, 'safety_snapshots'));
+      } else {
+        final docs = await getApplicationDocumentsDirectory();
+        dir = Directory(p.join(docs.path, 'safety_snapshots'));
+      }
+      final json = await buildBackupJson();
+      // Small file: synchronous I/O keeps this step atomic with the restore
+      // flow (and deterministic under widget-test fake async).
+      if (!dir.existsSync()) {
+        dir.createSync(recursive: true);
+      }
+
+      final stamp = _nowProvider().toUtc().millisecondsSinceEpoch;
+      final file = File(p.join(dir.path, 'pre-restore-$stamp.json'))
+        ..writeAsStringSync(json, flush: true);
+
+      // Keep only the newest few snapshots.
+      final existing = dir
+          .listSync()
+          .whereType<File>()
+          .where((f) => p.basename(f.path).startsWith('pre-restore-'))
+          .toList()
+        ..sort((a, b) => b.path.compareTo(a.path));
+      for (final old in existing.skip(maxSafetySnapshots)) {
+        old.deleteSync();
+      }
+
+      lastSafetySnapshotPath = file.path;
+      return file.path;
+    } catch (error) {
+      throw BackupSnapshotException('$error');
+    }
+  }
+
   Future<void> restoreBackup(
     ParsedBackupDocument doc,
     BackupRestoreMode mode,
   ) async {
+    if (mode == BackupRestoreMode.replace) {
+      await createSafetySnapshot();
+    }
     await _db.transaction(() async {
       if (mode == BackupRestoreMode.replace) {
         await _db.delete(_db.activeTimerStates).go();

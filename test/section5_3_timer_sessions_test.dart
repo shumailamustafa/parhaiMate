@@ -155,11 +155,11 @@ void main() {
       expect(find.text('No time limit'), findsOneWidget);
       expect(find.text('Pomodoro settings'), findsNothing);
 
-      // Switch to Pomodoro -> steppers and 1h 55m (4*25 + 3*5) appear
+      // Switch to Pomodoro -> steppers and 2h 10m (4*25 + 3*5 + 15 long break)
       await tester.tap(find.text('Pomodoro').first);
       await tester.pumpAndSettle();
       expect(find.text('Pomodoro settings'), findsOneWidget);
-      expect(find.text('1h 55m'), findsOneWidget);
+      expect(find.text('2h 10m'), findsOneWidget);
       expect(find.text('4 cycles'), findsOneWidget);
 
       // Start session -> enters Active Focus screen

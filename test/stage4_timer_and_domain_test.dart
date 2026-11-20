@@ -5,6 +5,7 @@ import 'package:parhaimate/core/utils/date_time_utils.dart';
 import 'package:parhaimate/data/database/app_database.dart';
 import 'package:parhaimate/data/repositories/drift_repositories.dart';
 import 'package:parhaimate/domain/enums/domain_enums.dart';
+import 'package:parhaimate/features/settings/viewmodels/settings_viewmodel.dart';
 
 void main() {
   late AppDatabase db;
@@ -124,12 +125,13 @@ void main() {
       expect(saved.subjectId, subjectId);
     });
 
-    test('Pomodoro transitions focus -> short break -> next cycle & recovers on relaunch',
+    test('Pomodoro transitions focus -> short break -> next cycle -> long break & recovers on relaunch',
         () async {
       await timerEngine.startSession(
         mode: TimerMode.pomodoro,
         focusMinutes: 25,
         shortBreakMinutes: 5,
+        longBreakMinutes: 15,
         totalCycles: 4,
       );
 
@@ -159,6 +161,16 @@ void main() {
       fakeNowMs += 89 * 60 * 1000;
       await restoredEngine.reconcile();
 
+      // After the 4th focus cycle the set moves into the 15m long break.
+      expect(restoredEngine.hasActiveSession, isTrue);
+      expect(restoredEngine.activeState.value!.phase, TimerPhase.longBreak);
+      expect(restoredEngine.activeState.value!.currentCycle, 4);
+      expect(restoredEngine.displaySeconds.value, 14 * 60);
+
+      // Long break ends -> session completes with focus time only.
+      fakeNowMs += 15 * 60 * 1000;
+      await restoredEngine.reconcile();
+
       expect(restoredEngine.hasActiveSession, isFalse);
       expect(restoredEngine.lastCompletedSession.value, isNotNull);
       expect(restoredEngine.lastCompletedSession.value!.durationSeconds, 100 * 60);
@@ -170,6 +182,67 @@ void main() {
       expect(focusStarter.isUnlocked, isTrue);
 
       restoredEngine.onClose();
+    });
+
+    test('forgotten stopwatch is auto-saved at the 12 hour cap', () async {
+      await timerEngine.startSession(mode: TimerMode.stopwatch);
+
+      fakeNowMs += 30 * 60 * 60 * 1000; // left running for 30 hours
+      await timerEngine.reconcile();
+
+      expect(timerEngine.hasActiveSession, isFalse);
+      final saved = timerEngine.lastCompletedSession.value!;
+      expect(saved.durationSeconds, TimerEngineService.maxStopwatchSeconds);
+      expect(
+        saved.endedAtMs! - saved.startedAtMs,
+        TimerEngineService.maxStopwatchSeconds * 1000,
+      );
+    });
+
+    test('alert timeline covers every Pomodoro phase and ends after the long break',
+        () async {
+      final active = await timerEngine.startSession(
+        mode: TimerMode.pomodoro,
+        focusMinutes: 25,
+        shortBreakMinutes: 5,
+        longBreakMinutes: 15,
+        totalCycles: 2,
+      );
+      final alerts = timerEngine.buildAlertTimeline(active);
+      final minutes =
+          alerts.map((a) => (a.atMs - fakeNowMs) ~/ 60000).toList();
+      // focus1 end, break end, focus2 end (long break starts), long break end
+      expect(minutes, <int>[25, 30, 55, 70]);
+      expect(alerts.last.title, 'Study session complete');
+
+      await timerEngine.pause();
+      expect(
+        timerEngine.buildAlertTimeline(timerEngine.activeState.value!),
+        isEmpty,
+      );
+    });
+
+    test('Clear Study History during a live session stops the timer safely',
+        () async {
+      final settingsVm = SettingsViewModel(
+        settingsRepository: DriftSettingsRepository(db),
+        goalStreakRepository: goalStreakRepo,
+        presetRepository: DriftPresetRepository(db),
+        sessionRepository: sessionRepo,
+        subjectRepository: subjectRepo,
+        timerEngine: timerEngine,
+      );
+
+      await timerEngine.startSession(mode: TimerMode.focus, focusMinutes: 25);
+      await settingsVm.clearStudyHistory();
+
+      expect(timerEngine.hasActiveSession, isFalse);
+      // Previously this threw StateError('Session not found') when the
+      // still-running timer reached its end.
+      fakeNowMs += 30 * 60 * 1000;
+      await timerEngine.reconcile();
+      expect(await sessionRepo.getCompletedSessions(), isEmpty);
+      expect(await db.activeTimerDao.getActiveState(), isNull);
     });
 
     test('calculates current and longest streaks across days', () async {

@@ -133,12 +133,22 @@ class BackupViewModel extends GetxController {
       if (!_disposed) {
         importStage.value = ImportBackupStage.restored;
       }
-    } catch (_) {
+    } on BackupSnapshotException {
       if (!_disposed) {
-        parseFailure.value = BackupParseFailure(
-          title: 'This backup is damaged',
+        parseFailure.value = const BackupParseFailure(
+          title: "Couldn't restore",
           message:
-              'Some data in ${doc.fileName} is missing. Try a newer backup file.',
+              "ParhaiMate couldn't save a safety copy of your current data, so nothing was changed. Free up some storage and try again.",
+        );
+        importStage.value = ImportBackupStage.error;
+      }
+    } catch (_) {
+      // The restore runs in a single transaction, so a failure rolls back.
+      if (!_disposed) {
+        parseFailure.value = const BackupParseFailure(
+          title: "Couldn't restore",
+          message:
+              'Something went wrong while restoring. Your existing data was not changed.',
         );
         importStage.value = ImportBackupStage.error;
       }

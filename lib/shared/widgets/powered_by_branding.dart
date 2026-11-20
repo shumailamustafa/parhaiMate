@@ -28,7 +28,7 @@ class PoweredByCodingDistrict extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
           child: Image.asset(
-            'assets/Coding District Icn.jpg',
+            'assets/coding_district_logo.jpg',
             fit: BoxFit.cover,
           ),
         ),
