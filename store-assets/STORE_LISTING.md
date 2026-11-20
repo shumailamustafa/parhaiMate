@@ -4,7 +4,7 @@ Copy-paste into Play Console. Character limits are Google's.
 
 ## Main store listing
 
-**App name** (max 30): `ParhaiMate: Study Timer`
+**App name** (max 30): `ParhaiMate`
 
 **Short description** (max 80):
 ```
