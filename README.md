@@ -272,7 +272,11 @@ The [`legal-site/`](legal-site/) folder is a small static site ready for GitHub 
 | `index.html` | Landing page linking all three |
 | `style.css` | Shared white/navy styling |
 
-Upload the five files to a public GitHub repo and enable **Settings → Pages → Deploy from a branch (`main`, `/ (root)`)**. Use `https://<username>.github.io/<repo>/privacy-policy.html` as the Play Console privacy policy URL. The Markdown source is [`docs/PRIVACY_POLICY.md`](docs/PRIVACY_POLICY.md).
+They are deployed by the GitHub Actions workflow [.github/workflows/pages.yml](.github/workflows/pages.yml) on every push that changes `legal-site/` (one-time setup: **Settings → Pages → Source: GitHub Actions**). Live URLs:
+
+- Privacy policy (Play Console): https://shumailamustafa.github.io/parhaiMate/privacy-policy.html
+- Terms: https://shumailamustafa.github.io/parhaiMate/terms.html
+- Support & data deletion: https://shumailamustafa.github.io/parhaiMate/support.html The Markdown source is [`docs/PRIVACY_POLICY.md`](docs/PRIVACY_POLICY.md).
 
 **Developer:** Moazzam Samoo · **Support:** [moazzamsamoo819@gmail.com](mailto:moazzamsamoo819@gmail.com)
 

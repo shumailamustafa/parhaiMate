@@ -51,8 +51,8 @@ ParhaiMate is built for school, college and university students who want a simpl
 **App category:** Education
 **Tags (pick up to 5):** Education, Productivity, Study, Timer, Planner
 **Contact email:** moazzamsamoo819@gmail.com
-**Website:** `https://<username>.github.io/<repo>/`
-**Privacy policy URL:** `https://<username>.github.io/<repo>/privacy-policy.html`
+**Website:** `https://shumailamustafa.github.io/parhaiMate/`
+**Privacy policy URL:** `https://shumailamustafa.github.io/parhaiMate/privacy-policy.html`
 
 **Graphics**
 | Asset | File | Requirement |
