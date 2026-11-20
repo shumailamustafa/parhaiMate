@@ -50,4 +50,4 @@ Verify a bundle is signed with the upload key:
 - Pomodoro session = N focus cycles, a short break between cycles, then one long break. The session is saved when the long break ends or the user taps Finish. Only focus time counts.
 - Stopwatch sessions are auto-saved at 12 hours.
 - Streak day = any completed study time that day (not the daily goal).
-- Session alerts use inexact alarms (no exact-alarm permission), so they may arrive up to a few minutes late on some devices.
+- Session alerts use inexact alarms only (no SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM) to keep Play policy risk minimal. Android may deliver them several minutes late; the in-app timer and saved durations are always exact.

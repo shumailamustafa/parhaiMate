@@ -117,6 +117,22 @@ class SettingsView extends GetView<SettingsViewModel> {
                         ),
                       ),
                     ),
+                    if (controller.notificationsBlocked) ...<Widget>[
+                      const Divider(height: 1, color: AppColors.divider),
+                      PmListTileRow(
+                        title: 'Notifications Are Off',
+                        subtitle:
+                            'Tap to allow. If nothing appears, turn on notifications for ParhaiMate in Android Settings > Apps.',
+                        leading: const Icon(
+                          Icons.notifications_off_outlined,
+                          size: 20,
+                          color: AppColors.textPrimary,
+                        ),
+                        onTap: () => unawaited(
+                          controller.requestNotificationPermission(),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

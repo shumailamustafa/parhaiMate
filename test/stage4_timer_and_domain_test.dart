@@ -1,11 +1,27 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parhaimate/core/services/session_notifier.dart';
 import 'package:parhaimate/core/services/timer_engine_service.dart';
 import 'package:parhaimate/core/utils/date_time_utils.dart';
 import 'package:parhaimate/data/database/app_database.dart';
 import 'package:parhaimate/data/repositories/drift_repositories.dart';
 import 'package:parhaimate/domain/enums/domain_enums.dart';
 import 'package:parhaimate/features/settings/viewmodels/settings_viewmodel.dart';
+
+class _RecordingNotifier implements SessionNotifier {
+  List<ScheduledAlert> scheduled = <ScheduledAlert>[];
+  int cancelCount = 0;
+
+  @override
+  Future<void> scheduleSessionAlerts(List<ScheduledAlert> alerts) async {
+    scheduled = alerts;
+  }
+
+  @override
+  Future<void> cancelSessionAlerts() async {
+    cancelCount += 1;
+  }
+}
 
 void main() {
   late AppDatabase db;
@@ -220,6 +236,39 @@ void main() {
         timerEngine.buildAlertTimeline(timerEngine.activeState.value!),
         isEmpty,
       );
+    });
+
+    test('completion while backgrounded keeps the pending alert; foreground cancels it',
+        () async {
+      final notifier = _RecordingNotifier();
+      final engine = TimerEngineService(
+        sessionRepository: sessionRepo,
+        activeTimerDao: db.activeTimerDao,
+        nowMsProvider: () => fakeNowMs,
+        notifier: notifier,
+      );
+
+      // Background: the session ends while the user is away.
+      await engine.startSession(mode: TimerMode.focus, focusMinutes: 25);
+      expect(notifier.scheduled.single.title, 'Focus session complete');
+      engine.onAppBackgrounded();
+      notifier.cancelCount = 0;
+      fakeNowMs += 26 * 60 * 1000;
+      await engine.reconcile();
+      expect(engine.hasActiveSession, isFalse);
+      expect(notifier.cancelCount, 0,
+          reason: 'the scheduled completion alert must still be delivered');
+
+      // Foreground: the user sees the summary, so pending alerts are dropped.
+      await engine.onAppForegrounded();
+      await engine.startSession(mode: TimerMode.focus, focusMinutes: 25);
+      notifier.cancelCount = 0;
+      fakeNowMs += 26 * 60 * 1000;
+      await engine.reconcile();
+      expect(engine.hasActiveSession, isFalse);
+      expect(notifier.cancelCount, 1);
+
+      engine.onClose();
     });
 
     test('Clear Study History during a live session stops the timer safely',

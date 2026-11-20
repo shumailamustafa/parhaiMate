@@ -49,7 +49,6 @@ class SessionSetupViewModel extends GetxController {
       await _notificationService?.requestPermission();
     }
   }
-
   static const List<int> durationChoices = <int>[15, 25, 30, 45, 60];
 
   final SubjectRepository _subjectRepository;

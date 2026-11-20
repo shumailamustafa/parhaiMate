@@ -4,7 +4,8 @@ import 'package:flutter/widgets.dart';
 
 import '../../core/services/timer_engine_service.dart';
 
-/// Reconciles persisted timer timestamps whenever the app resumes from background.
+/// Pauses the on-screen timer ticker in the background and reconciles
+/// persisted timer timestamps whenever the app becomes visible again.
 class AppLifecycleHandler with WidgetsBindingObserver {
   AppLifecycleHandler(this._timerEngine);
 
@@ -29,8 +30,16 @@ class AppLifecycleHandler with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      unawaited(_timerEngine.reconcile());
+    switch (state) {
+      case AppLifecycleState.resumed:
+        unawaited(_timerEngine.onAppForegrounded());
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _timerEngine.onAppBackgrounded();
+      case AppLifecycleState.inactive:
+        // Brief interruptions (notification shade, dialogs): keep ticking.
+        break;
     }
   }
 }

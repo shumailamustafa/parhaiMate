@@ -30,11 +30,35 @@ class SettingsViewModel extends GetxController {
   final LocalNotificationService? _notificationService;
   final RxBool sessionAlertsEnabled = true.obs;
 
+  /// False when Android itself blocks this app's notifications.
+  final RxBool systemNotificationsAllowed = true.obs;
+
+  bool get notificationsBlocked =>
+      (_notificationService?.isInitialized ?? false) &&
+      sessionAlertsEnabled.value &&
+      !systemNotificationsAllowed.value;
+
+  Future<void> requestNotificationPermission() async {
+    await _notificationService?.requestPermission();
+    await _refreshNotificationAccess();
+    await _timerEngine.rescheduleAlerts();
+  }
+
+  Future<void> _refreshNotificationAccess() async {
+    final service = _notificationService;
+    final realDevice = service != null && service.isInitialized;
+    final posted = !realDevice || await service.areNotificationsAllowed();
+    if (!_disposed) {
+      systemNotificationsAllowed.value = posted;
+    }
+  }
+
   Future<void> setSessionAlertsEnabled({required bool enabled}) async {
     await _settingsRepo.setSessionAlertsEnabled(enabled: enabled);
     _notificationService?.setEnabled(enabled: enabled);
     if (enabled) {
       await _notificationService?.requestPermission();
+      await _refreshNotificationAccess();
       await _timerEngine.rescheduleAlerts();
     } else {
       await _notificationService?.cancelSessionAlerts();
@@ -90,6 +114,7 @@ class SettingsViewModel extends GetxController {
       defaultTimerMode.value = mode;
       sessionAlertsEnabled.value = alerts;
     }
+    await _refreshNotificationAccess();
   }
 
   Future<void> setDefaultTimerMode(TimerMode mode) async {

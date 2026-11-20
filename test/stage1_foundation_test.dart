@@ -52,8 +52,14 @@ void main() {
       expect(manifest, contains('@xml/data_extraction_rules'));
       // Session alerts use inexact alarms only: no exact-alarm,
       // full-screen-intent, or foreground-service permission.
-      expect(manifest, isNot(contains('SCHEDULE_EXACT_ALARM')));
-      expect(manifest, isNot(contains('USE_EXACT_ALARM')));
+      expect(
+        manifest,
+        isNot(contains('android:name="android.permission.SCHEDULE_EXACT_ALARM"')),
+      );
+      expect(
+        manifest,
+        isNot(contains('android:name="android.permission.USE_EXACT_ALARM"')),
+      );
       expect(manifest, isNot(contains('USE_FULL_SCREEN_INTENT')));
       expect(manifest, isNot(contains('FOREGROUND_SERVICE')));
       expect(manifest, isNot(contains('ACCESS_FINE_LOCATION')));

@@ -1,8 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Lets scheduled session alerts survive a device reboot.
-         POST_NOTIFICATIONS is merged in from flutter_local_notifications.
-         No exact-alarm, full-screen-intent or foreground-service permission. -->
+         POST_NOTIFICATIONS is merged in from flutter_local_notifications. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Intentionally no exact-alarm permission (SCHEDULE_EXACT_ALARM /
+         USE_EXACT_ALARM), full-screen intent or foreground service: alerts
+         use inexact alarms to keep Play policy review risk minimal. -->
     <application
         android:label="ParhaiMate"
         android:name="${applicationName}"

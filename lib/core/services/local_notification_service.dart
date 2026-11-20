@@ -7,10 +7,13 @@ import 'session_notifier.dart';
 
 /// Schedules local session alerts with inexact Android alarms.
 ///
-/// No exact-alarm permission, foreground service, or full-screen intent is
-/// used. Alerts are scheduled against absolute UTC instants, so device
-/// timezone changes do not shift them. Every plugin call is guarded: a
-/// notification failure must never break the timer itself.
+/// Deliberately uses no exact-alarm permission (neither SCHEDULE_EXACT_ALARM
+/// nor USE_EXACT_ALARM), foreground service, or full-screen intent, to keep
+/// Play review risk minimal. Trade-off: Android may deliver an alert late
+/// (up to ~75% of the remaining time when it was scheduled, longer in Doze).
+/// Alerts are scheduled against absolute UTC instants, so timezone changes
+/// do not shift them. Every plugin call is guarded: a notification failure
+/// must never break the timer itself.
 class LocalNotificationService implements SessionNotifier {
   LocalNotificationService({FlutterLocalNotificationsPlugin? plugin})
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();

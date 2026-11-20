@@ -49,6 +49,24 @@ class TimerEngineService extends GetxService {
 
   Timer? _uiTicker;
   bool _reconciling = false;
+  bool _appInForeground = true;
+
+  /// Called when the app leaves the screen. The display ticker stops so the
+  /// app never completes a session (and cancels its pending alert) while
+  /// the user is away; the scheduled alert is what tells them.
+  void onAppBackgrounded() {
+    _appInForeground = false;
+    _stopUiTicker();
+  }
+
+  /// Called when the app is visible again: catch up from timestamps.
+  Future<void> onAppForegrounded() async {
+    _appInForeground = true;
+    await reconcile();
+    if (isRunning) {
+      _startUiTicker();
+    }
+  }
 
   bool get hasActiveSession => activeState.value != null;
   bool get isRunning =>
@@ -399,7 +417,11 @@ class TimerEngineService extends GetxService {
     String? notes,
   }) async {
     _stopUiTicker();
-    await _notifier.cancelSessionAlerts();
+    // In the foreground the user sees the summary, so drop pending alerts.
+    // In the background, leave them: the completion alert must still fire.
+    if (_appInForeground) {
+      await _notifier.cancelSessionAlerts();
+    }
     final session = await _sessionRepository.completeSession(
       sessionId: current.sessionId!,
       endedAtMs: endedAtMs,
